@@ -1,0 +1,11 @@
+# binary
+may
+dist/
+
+# sisyphus planning artifacts
+.sisyphus/
+
+# go
+*.test
+*.out
+vendor/
