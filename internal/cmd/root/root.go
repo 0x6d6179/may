@@ -1,6 +1,7 @@
 package root
 
 import (
+	"github.com/0x6d6179/may/internal/cmd/shell"
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/version"
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd.AddCommand(wtGroup())
 	cmd.AddCommand(commitGroup())
 	cmd.AddCommand(idGroup())
-	cmd.AddCommand(shellGroup())
+	cmd.AddCommand(shell.NewCmdShell(f))
 	cmd.AddCommand(completionGroup())
 	cmd.AddCommand(updateGroup())
 
@@ -43,10 +44,6 @@ func commitGroup() *cobra.Command {
 
 func idGroup() *cobra.Command {
 	return &cobra.Command{Use: "id", Short: "Git identity management"}
-}
-
-func shellGroup() *cobra.Command {
-	return &cobra.Command{Use: "shell", Short: "Shell integration"}
 }
 
 func completionGroup() *cobra.Command {
