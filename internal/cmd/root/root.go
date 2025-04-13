@@ -2,6 +2,7 @@ package root
 
 import (
 	"github.com/0x6d6179/may/internal/cmd/shell"
+	"github.com/0x6d6179/may/internal/cmd/ws"
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/version"
 	"github.com/spf13/cobra"
@@ -19,7 +20,7 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd.Version = version.Version
 
 	// Subcommand groups — each is replaced by a real implementation in its own package.
-	cmd.AddCommand(wsGroup())
+	cmd.AddCommand(ws.NewCmdWs(f))
 	cmd.AddCommand(wtGroup())
 	cmd.AddCommand(commitGroup())
 	cmd.AddCommand(idGroup())
@@ -28,10 +29,6 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd.AddCommand(updateGroup())
 
 	return cmd
-}
-
-func wsGroup() *cobra.Command {
-	return &cobra.Command{Use: "ws", Short: "Workspace management"}
 }
 
 func wtGroup() *cobra.Command {

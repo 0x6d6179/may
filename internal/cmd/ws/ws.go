@@ -1,0 +1,64 @@
+package ws
+
+import (
+	"errors"
+	"fmt"
+
+	"github.com/0x6d6179/may/internal/factory"
+	"github.com/0x6d6179/may/internal/workspace"
+	"github.com/charmbracelet/huh"
+	"github.com/spf13/cobra"
+)
+
+func NewCmdWs(f *factory.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "ws",
+		Short: "Workspace management",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !f.IO.IsTerminal() {
+				fmt.Fprintln(f.IO.ErrOut, "not a terminal")
+				return errors.New("not a terminal")
+			}
+
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
+
+			workspaces := workspace.List(cfg)
+			if len(workspaces) == 0 {
+				fmt.Fprintln(f.IO.ErrOut, "no workspaces configured")
+				return nil
+			}
+
+			options := make([]huh.Option[string], len(workspaces))
+			for i, ws := range workspaces {
+				options[i] = huh.NewOption(ws.Name, ws.Path)
+			}
+
+			var selected string
+			form := huh.NewForm(
+				huh.NewGroup(
+					huh.NewSelect[string]().
+						Title("Select workspace").
+						Options(options...).
+						Value(&selected),
+				),
+			)
+
+			if err := form.Run(); err != nil {
+				return err
+			}
+
+			fmt.Fprintln(f.IO.Out, selected)
+			return nil
+		},
+	}
+
+	cmd.AddCommand(NewCmdWsNew(f))
+	cmd.AddCommand(NewCmdWsList(f))
+	cmd.AddCommand(NewCmdWsSearch(f))
+	cmd.AddCommand(NewCmdWsRoot(f))
+
+	return cmd
+}
