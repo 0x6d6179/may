@@ -2,6 +2,7 @@ package root
 
 import (
 	"github.com/0x6d6179/may/internal/cmd/commit"
+	"github.com/0x6d6179/may/internal/cmd/id"
 	"github.com/0x6d6179/may/internal/cmd/shell"
 	"github.com/0x6d6179/may/internal/cmd/ws"
 	"github.com/0x6d6179/may/internal/cmd/wt"
@@ -10,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCmdRoot returns the root cobra command for the may CLI.
 func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "may",
@@ -23,16 +25,12 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd.AddCommand(ws.NewCmdWs(f))
 	cmd.AddCommand(wt.NewCmdWt(f))
 	cmd.AddCommand(commit.NewCmdCommit(f))
-	cmd.AddCommand(idGroup())
+	cmd.AddCommand(id.NewCmdId(f))
 	cmd.AddCommand(shell.NewCmdShell(f))
 	cmd.AddCommand(completionGroup())
 	cmd.AddCommand(updateGroup())
 
 	return cmd
-}
-
-func idGroup() *cobra.Command {
-	return &cobra.Command{Use: "id", Short: "Git identity management"}
 }
 
 func completionGroup() *cobra.Command {
