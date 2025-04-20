@@ -53,6 +53,18 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 			fmt.Fprintln(f.IO.Out, selected)
 			return nil
 		},
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			cfg, err := f.Config()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			workspaces := workspace.List(cfg)
+			names := make([]string, len(workspaces))
+			for i, ws := range workspaces {
+				names[i] = ws.Name
+			}
+			return names, cobra.ShellCompDirectiveNoFileComp
+		},
 	}
 
 	cmd.AddCommand(NewCmdWsNew(f))
