@@ -4,6 +4,7 @@ import (
 	"github.com/0x6d6179/may/internal/cmd/commit"
 	"github.com/0x6d6179/may/internal/cmd/completion"
 	"github.com/0x6d6179/may/internal/cmd/id"
+	initcmd "github.com/0x6d6179/may/internal/cmd/init"
 	"github.com/0x6d6179/may/internal/cmd/shell"
 	"github.com/0x6d6179/may/internal/cmd/update"
 	"github.com/0x6d6179/may/internal/cmd/ws"
@@ -30,6 +31,7 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd.AddCommand(shell.NewCmdShell(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f, cmd))
 	cmd.AddCommand(update.NewCmdUpdate(f))
+	cmd.AddCommand(initcmd.NewCmdInit(f))
 
 	return cmd
 }
