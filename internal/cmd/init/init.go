@@ -106,6 +106,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		if err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewSelect[string]().
+					Filtering(true).
 					Title("Primary workspace root").
 					Options(opts...).
 					Value(&rootPath),

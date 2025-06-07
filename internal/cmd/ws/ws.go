@@ -3,6 +3,7 @@ package ws
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/workspace"
@@ -25,7 +26,26 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
+			done := make(chan struct{})
+			go func() {
+				frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+				i := 0
+				for {
+					select {
+					case <-done:
+						fmt.Fprint(f.IO.ErrOut, "\r                    \r")
+						return
+					default:
+						fmt.Fprintf(f.IO.ErrOut, "\r%s loading...", frames[i%len(frames)])
+						i++
+						time.Sleep(80 * time.Millisecond)
+					}
+				}
+			}()
 			workspaces := workspace.List(cfg)
+			close(done)
+			time.Sleep(10 * time.Millisecond)
+
 			if len(workspaces) == 0 {
 				fmt.Fprintln(f.IO.ErrOut, "no workspaces configured")
 				return nil
@@ -40,6 +60,7 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 			form := huh.NewForm(
 				huh.NewGroup(
 					huh.NewSelect[string]().
+						Filtering(true).
 						Title("Select workspace").
 						Options(options...).
 						Value(&selected),
