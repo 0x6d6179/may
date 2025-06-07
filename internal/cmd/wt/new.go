@@ -67,7 +67,9 @@ func NewCmdWtNew(f *factory.Factory) *cobra.Command {
 				fmt.Fprintf(f.IO.ErrOut, "warning: could not copy env files: %v\n", err)
 			}
 
-			fmt.Fprintln(f.IO.Out, shadowPath)
+			if !f.IO.IsTerminal() {
+				fmt.Fprintln(f.IO.Out, shadowPath)
+			}
 			fmt.Fprintf(f.IO.ErrOut, "✓ worktree created: %s\n  - location: %s\n", args[0], shadowPath)
 			return nil
 		},

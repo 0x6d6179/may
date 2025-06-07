@@ -39,7 +39,9 @@ func NewCmdWtClose(f *factory.Factory) *cobra.Command {
 			}
 
 			// Print main path first so shell wrapper can cd before cleanup
-			fmt.Fprintln(f.IO.Out, mainPath)
+			if !f.IO.IsTerminal() {
+				fmt.Fprintln(f.IO.Out, mainPath)
+			}
 
 			if _, err := runner.Run("worktree", "remove", "--force", cwd); err != nil {
 				return err

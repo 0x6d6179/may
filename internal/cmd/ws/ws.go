@@ -57,7 +57,9 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 			}
 
 			fmt.Fprintf(f.IO.ErrOut, "✓ workspace switched to %s!\n  - location: %s\n", nameByPath[selected], selected)
-			fmt.Fprintln(f.IO.Out, selected)
+			if !f.IO.IsTerminal() {
+				fmt.Fprintln(f.IO.Out, selected)
+			}
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

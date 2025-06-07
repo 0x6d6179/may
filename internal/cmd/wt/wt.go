@@ -57,7 +57,9 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 			}
 
 			fmt.Fprintf(f.IO.ErrOut, "✓ jumped to %s\n  - location: %s\n", branchByPath[selected], selected)
-			fmt.Fprintln(f.IO.Out, selected)
+			if !f.IO.IsTerminal() {
+				fmt.Fprintln(f.IO.Out, selected)
+			}
 			return nil
 		},
 	}

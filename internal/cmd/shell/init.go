@@ -13,7 +13,7 @@ const zshShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
 
   function ws() {
     local _may_out
-    _may_out=$(may ws "$@" 2>/dev/tty)
+    _may_out=$(may ws "$@")
     if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
     fi
@@ -21,7 +21,7 @@ const zshShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
 
   function wt() {
     local _may_out
-    _may_out=$(may wt "$@" 2>/dev/tty)
+    _may_out=$(may wt "$@")
     if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
     fi
@@ -40,7 +40,7 @@ const bashShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
 
   function ws() {
     local _may_out
-    _may_out=$(may ws "$@" 2>/dev/tty)
+    _may_out=$(may ws "$@")
     if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
     fi
@@ -48,7 +48,7 @@ const bashShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
 
   function wt() {
     local _may_out
-    _may_out=$(may wt "$@" 2>/dev/tty)
+    _may_out=$(may wt "$@")
     if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
     fi
@@ -64,14 +64,14 @@ const fishShim = `if not set -q _MAY_SHELL_INIT
   set -gx _MAY_SHELL_INIT 1
 
   function ws
-    set _may_out (may ws $argv 2>/dev/tty)
+    set _may_out (may ws $argv)
     if test -n "$_may_out" -a -d "$_may_out"
       builtin cd "$_may_out"
     end
   end
 
   function wt
-    set _may_out (may wt $argv 2>/dev/tty)
+    set _may_out (may wt $argv)
     if test -n "$_may_out" -a -d "$_may_out"
       builtin cd "$_may_out"
     end
