@@ -110,7 +110,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 					Options(opts...).
 					Value(&rootPath),
 			),
-		).Run(); err != nil {
+		).WithHeight(10).Run(); err != nil {
 			return err
 		}
 
@@ -131,7 +131,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 						}).
 						Value(&customPath),
 				),
-			).Run(); err != nil {
+			).WithHeight(10).Run(); err != nil {
 				return err
 			}
 			rootPath = customPath
@@ -146,7 +146,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 					Placeholder(defaultName).
 					Value(&rootName),
 			),
-		).Run(); err != nil {
+		).WithHeight(10).Run(); err != nil {
 			return err
 		}
 		if rootName == "" {
@@ -169,7 +169,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 					Title("Add another root?").
 					Value(&addAnother),
 			),
-		).Run(); err != nil {
+		).WithHeight(10).Run(); err != nil {
 			return err
 		}
 		if !addAnother {
@@ -198,7 +198,7 @@ func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
 				Placeholder("personal").
 				Value(&profileName),
 		),
-	).Run(); err != nil {
+	).WithHeight(10).Run(); err != nil {
 		return "", err
 	}
 
@@ -226,7 +226,7 @@ func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) e
 					Title(fmt.Sprintf("Map %q to the %q profile?", root.Path, profileName)).
 					Value(&mapIt),
 			),
-		).Run(); err != nil {
+		).WithHeight(10).Run(); err != nil {
 			return err
 		}
 		if mapIt {
@@ -248,7 +248,7 @@ func setupAIKey(f *factory.Factory, cfg *config.Config) error {
 				EchoMode(huh.EchoModePassword).
 				Value(&apiKey),
 		),
-	).Run(); err != nil {
+	).WithHeight(10).Run(); err != nil {
 		return err
 	}
 	cfg.AI.APIKey = apiKey

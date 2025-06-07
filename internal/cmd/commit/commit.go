@@ -49,7 +49,7 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 							Title("Stage all changes?").
 							Value(&stageAll),
 					),
-				).Run(); err != nil {
+				).WithHeight(10).Run(); err != nil {
 					return err
 				}
 
@@ -91,7 +91,7 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 							Title("Commit message:").
 							Value(&custom),
 					),
-				).Run(); err != nil {
+				).WithHeight(10).Run(); err != nil {
 					return err
 				}
 				selected = custom
@@ -122,7 +122,7 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 					).
 					Value(&selected),
 			),
-		).Run(); err != nil {
+		).WithHeight(10).Run(); err != nil {
 			return "", err
 		}
 		return selected, nil
@@ -142,7 +142,7 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 				).
 				Value(&selected),
 		),
-	).Run(); err != nil {
+	).WithHeight(10).Run(); err != nil {
 		return "", err
 	}
 

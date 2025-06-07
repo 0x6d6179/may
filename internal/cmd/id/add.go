@@ -43,7 +43,7 @@ func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 						Title("GitHub username").
 						Value(&ghUser),
 				),
-			)
+			).WithHeight(10)
 
 			if err := form.Run(); err != nil {
 				return err
