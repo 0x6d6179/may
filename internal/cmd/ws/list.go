@@ -2,9 +2,9 @@ package ws
 
 import (
 	"fmt"
-	"text/tabwriter"
 
 	"github.com/0x6d6179/may/internal/factory"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/0x6d6179/may/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ func NewCmdWsList(f *factory.Factory) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(f.IO.ErrOut, 0, 2, 2, ' ', 0)
+			tw := ui.NewTable(f.IO.ErrOut)
 			for _, ws := range workspaces {
 				fmt.Fprintf(tw, "%s\t%s\t%s\n", ws.Name, ws.Root, ws.Path)
 			}

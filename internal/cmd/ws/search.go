@@ -3,9 +3,9 @@ package ws
 import (
 	"fmt"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/0x6d6179/may/internal/factory"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/0x6d6179/may/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +27,7 @@ func NewCmdWsSearch(f *factory.Factory) *cobra.Command {
 			}
 
 			workspaces := workspace.List(cfg)
-			tw := tabwriter.NewWriter(f.IO.ErrOut, 0, 2, 2, ' ', 0)
+			tw := ui.NewTable(f.IO.ErrOut)
 			for _, ws := range workspaces {
 				if query == "" || strings.Contains(strings.ToLower(ws.Name), query) {
 					fmt.Fprintf(tw, "%s\t%s\t%s\n", ws.Name, ws.Root, ws.Path)

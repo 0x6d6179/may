@@ -10,6 +10,7 @@ import (
 	"github.com/0x6d6179/may/internal/ai"
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/git"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -43,13 +44,13 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 				}
 
 				var stageAll bool
-				if err := huh.NewForm(
+				if err := ui.NewForm(
 					huh.NewGroup(
 						huh.NewConfirm().
 							Title("Stage all changes?").
 							Value(&stageAll),
 					),
-				).WithHeight(10).Run(); err != nil {
+				).Run(); err != nil {
 					return err
 				}
 
@@ -85,13 +86,13 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 
 			if selected == "__custom__" {
 				var custom string
-				if err := huh.NewForm(
+				if err := ui.NewForm(
 					huh.NewGroup(
 						huh.NewInput().
 							Title("Commit message:").
 							Value(&custom),
 					),
-				).WithHeight(10).Run(); err != nil {
+				).Run(); err != nil {
 					return err
 				}
 				selected = custom
@@ -112,10 +113,9 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 	var selected string
 
 	if aiErr != nil || msgs == nil {
-		if err := huh.NewForm(
+		if err := ui.NewForm(
 			huh.NewGroup(
-				huh.NewSelect[string]().
-					Filtering(true).
+				ui.NewSelect[string]().
 					Title("Choose commit message").
 					Options(
 						huh.NewOption("Enter custom message", "__custom__"),
@@ -123,16 +123,15 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 					).
 					Value(&selected),
 			),
-		).WithHeight(10).Run(); err != nil {
+		).Run(); err != nil {
 			return "", err
 		}
 		return selected, nil
 	}
 
-	if err := huh.NewForm(
+	if err := ui.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().
-				Filtering(true).
+			ui.NewSelect[string]().
 				Title("Choose commit message").
 				Options(
 					huh.NewOption(msgs.Primary, msgs.Primary),
@@ -144,7 +143,7 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 				).
 				Value(&selected),
 		),
-	).WithHeight(10).Run(); err != nil {
+	).Run(); err != nil {
 		return "", err
 	}
 

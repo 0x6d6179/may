@@ -3,10 +3,10 @@ package wt
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/git"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
@@ -23,25 +23,9 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 
 			runner := &git.Runner{}
 
-			done := make(chan struct{})
-			go func() {
-				frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-				i := 0
-				for {
-					select {
-					case <-done:
-						fmt.Fprint(f.IO.ErrOut, "\r                    \r")
-						return
-					default:
-						fmt.Fprintf(f.IO.ErrOut, "\r%s loading...", frames[i%len(frames)])
-						i++
-						time.Sleep(80 * time.Millisecond)
-					}
-				}
-			}()
+			stop := ui.Spinner(f.IO.ErrOut, "loading...")
 			worktrees, err := git.ListWorktrees(runner)
-			close(done)
-			time.Sleep(10 * time.Millisecond)
+			stop()
 
 			if err != nil {
 				return err
@@ -57,15 +41,14 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 			}
 
 			var selected string
-			form := huh.NewForm(
+			form := ui.NewForm(
 				huh.NewGroup(
-					huh.NewSelect[string]().
-						Filtering(true).
+					ui.NewSelect[string]().
 						Title("Select worktree").
 						Options(options...).
 						Value(&selected),
 				),
-			).WithHeight(10)
+			)
 
 			if err := form.Run(); err != nil {
 				return err

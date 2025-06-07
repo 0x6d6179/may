@@ -3,9 +3,9 @@ package ws
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/0x6d6179/may/internal/factory"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/0x6d6179/may/internal/workspace"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -26,25 +26,9 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			done := make(chan struct{})
-			go func() {
-				frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-				i := 0
-				for {
-					select {
-					case <-done:
-						fmt.Fprint(f.IO.ErrOut, "\r                    \r")
-						return
-					default:
-						fmt.Fprintf(f.IO.ErrOut, "\r%s loading...", frames[i%len(frames)])
-						i++
-						time.Sleep(80 * time.Millisecond)
-					}
-				}
-			}()
+			stop := ui.Spinner(f.IO.ErrOut, "loading...")
 			workspaces := workspace.List(cfg)
-			close(done)
-			time.Sleep(10 * time.Millisecond)
+			stop()
 
 			if len(workspaces) == 0 {
 				fmt.Fprintln(f.IO.ErrOut, "no workspaces configured")
@@ -57,15 +41,14 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 			}
 
 			var selected string
-			form := huh.NewForm(
+			form := ui.NewForm(
 				huh.NewGroup(
-					huh.NewSelect[string]().
-						Filtering(true).
+					ui.NewSelect[string]().
 						Title("Select workspace").
 						Options(options...).
 						Value(&selected),
 				),
-			).WithHeight(10)
+			)
 
 			if err := form.Run(); err != nil {
 				return err

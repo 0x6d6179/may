@@ -8,6 +8,7 @@ import (
 
 	"github.com/0x6d6179/may/internal/config"
 	"github.com/0x6d6179/may/internal/factory"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
@@ -103,21 +104,20 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		opts = append(opts, huh.NewOption("Enter custom path", "__custom__"))
 
 		var rootPath string
-		if err := huh.NewForm(
+		if err := ui.NewForm(
 			huh.NewGroup(
-				huh.NewSelect[string]().
-					Filtering(true).
+				ui.NewSelect[string]().
 					Title("Primary workspace root").
 					Options(opts...).
 					Value(&rootPath),
 			),
-		).WithHeight(10).Run(); err != nil {
+		).Run(); err != nil {
 			return err
 		}
 
 		if rootPath == "__custom__" {
 			var customPath string
-			if err := huh.NewForm(
+			if err := ui.NewForm(
 				huh.NewGroup(
 					huh.NewInput().
 						Title("Workspace root path").
@@ -132,7 +132,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 						}).
 						Value(&customPath),
 				),
-			).WithHeight(10).Run(); err != nil {
+			).Run(); err != nil {
 				return err
 			}
 			rootPath = customPath
@@ -140,14 +140,14 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 
 		defaultName := filepath.Base(rootPath)
 		var rootName string
-		if err := huh.NewForm(
+		if err := ui.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
 					Title("Name for this root").
 					Placeholder(defaultName).
 					Value(&rootName),
 			),
-		).WithHeight(10).Run(); err != nil {
+		).Run(); err != nil {
 			return err
 		}
 		if rootName == "" {
@@ -164,13 +164,13 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		}
 
 		var addAnother bool
-		if err := huh.NewForm(
+		if err := ui.NewForm(
 			huh.NewGroup(
 				huh.NewConfirm().
 					Title("Add another root?").
 					Value(&addAnother),
 			),
-		).WithHeight(10).Run(); err != nil {
+		).Run(); err != nil {
 			return err
 		}
 		if !addAnother {
@@ -183,7 +183,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
 	var name, email, ghUser, profileName string
 
-	if err := huh.NewForm(
+	if err := ui.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Full name (git user.name)").
@@ -199,7 +199,7 @@ func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
 				Placeholder("personal").
 				Value(&profileName),
 		),
-	).WithHeight(10).Run(); err != nil {
+	).Run(); err != nil {
 		return "", err
 	}
 
@@ -221,13 +221,13 @@ func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
 func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) error {
 	for _, root := range cfg.Workspace.Roots {
 		var mapIt bool
-		if err := huh.NewForm(
+		if err := ui.NewForm(
 			huh.NewGroup(
 				huh.NewConfirm().
 					Title(fmt.Sprintf("Map %q to the %q profile?", root.Path, profileName)).
 					Value(&mapIt),
 			),
-		).WithHeight(10).Run(); err != nil {
+		).Run(); err != nil {
 			return err
 		}
 		if mapIt {
@@ -242,14 +242,14 @@ func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) e
 
 func setupAIKey(f *factory.Factory, cfg *config.Config) error {
 	var apiKey string
-	if err := huh.NewForm(
+	if err := ui.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("AI API key (leave blank to skip; stored in ~/.config/may/config.yaml)").
 				EchoMode(huh.EchoModePassword).
 				Value(&apiKey),
 		),
-	).WithHeight(10).Run(); err != nil {
+	).Run(); err != nil {
 		return err
 	}
 	cfg.AI.APIKey = apiKey

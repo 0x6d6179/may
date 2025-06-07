@@ -2,10 +2,10 @@ package wt
 
 import (
 	"fmt"
-	"text/tabwriter"
 
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/git"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ func NewCmdWtList(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			w := tabwriter.NewWriter(f.IO.ErrOut, 0, 0, 2, ' ', 0)
+			w := ui.NewTable(f.IO.ErrOut)
 			fmt.Fprintln(w, "PATH\tBRANCH\tMAIN")
 			for _, wt := range worktrees {
 				main := ""

@@ -2,9 +2,9 @@ package id
 
 import (
 	"fmt"
-	"text/tabwriter"
 
 	"github.com/0x6d6179/may/internal/factory"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func NewCmdIdList(f *factory.Factory) *cobra.Command {
 			}
 
 			if len(cfg.Git.Profiles) > 0 {
-				w := tabwriter.NewWriter(f.IO.ErrOut, 0, 0, 2, ' ', 0)
+				w := ui.NewTable(f.IO.ErrOut)
 				fmt.Fprintln(w, "NAME\tUSERNAME\tEMAIL\tGH_USER")
 				for _, p := range cfg.Git.Profiles {
 					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Name, p.Username, p.Email, p.GHUser)
@@ -29,7 +29,7 @@ func NewCmdIdList(f *factory.Factory) *cobra.Command {
 			}
 
 			if len(cfg.Git.Mappings) > 0 {
-				w := tabwriter.NewWriter(f.IO.ErrOut, 0, 0, 2, ' ', 0)
+				w := ui.NewTable(f.IO.ErrOut)
 				fmt.Fprintln(w, "PATH\tPROFILE")
 				for _, m := range cfg.Git.Mappings {
 					fmt.Fprintf(w, "%s\t%s\n", m.Path, m.Profile)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/0x6d6179/may/internal/config"
 	"github.com/0x6d6179/may/internal/factory"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 
 			var name, username, email, ghUser string
 
-			form := huh.NewForm(
+			form := ui.NewForm(
 				huh.NewGroup(
 					huh.NewInput().
 						Title("Profile name").
@@ -43,7 +44,7 @@ func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 						Title("GitHub username").
 						Value(&ghUser),
 				),
-			).WithHeight(10)
+			)
 
 			if err := form.Run(); err != nil {
 				return err
