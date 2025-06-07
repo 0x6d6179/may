@@ -16,8 +16,8 @@ import (
 func NewCmdInit(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Interactive first-run setup wizard",
-		Long:  "Bootstrap ~/.config/may/config.yaml by detecting workspace directories, collecting git identity info, and setting up an AI key.",
+		Short: "interactive first-run setup wizard",
+		Long:  "bootstrap ~/.config/may/config.yaml by detecting workspace directories, collecting git identity info, and setting up an AI key.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runInit(f)
 		},
@@ -61,12 +61,12 @@ func runInit(f *factory.Factory) error {
 	home, _ := os.UserHomeDir()
 	configFile := filepath.Join(home, ".config", "may", "config.yaml")
 	fmt.Fprintln(f.IO.ErrOut, "")
-	fmt.Fprintf(f.IO.ErrOut, "✓ Config saved to %s\n", configFile)
+	fmt.Fprintf(f.IO.ErrOut, "✓ config saved to %s\n", configFile)
 	fmt.Fprintln(f.IO.ErrOut, "")
-	fmt.Fprintln(f.IO.ErrOut, "To activate may in your shell, add this to your ~/.zprofile:")
+	fmt.Fprintln(f.IO.ErrOut, "to activate may in your shell, add this to your ~/.zprofile:")
 	fmt.Fprintln(f.IO.ErrOut, `  eval "$(may shell init zsh)"`)
 	fmt.Fprintln(f.IO.ErrOut, "")
-	fmt.Fprintln(f.IO.ErrOut, "Then restart your shell or run:")
+	fmt.Fprintln(f.IO.ErrOut, "then restart your shell or run:")
 	fmt.Fprintln(f.IO.ErrOut, "  source ~/.zprofile")
 
 	return nil
@@ -107,7 +107,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		if err := ui.NewForm(
 			huh.NewGroup(
 				ui.NewSelect[string]().
-					Title("Primary workspace root").
+					Title("primary workspace root").
 					Options(opts...).
 					Value(&rootPath),
 			),
@@ -120,7 +120,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 			if err := ui.NewForm(
 				huh.NewGroup(
 					huh.NewInput().
-						Title("Workspace root path").
+						Title("workspace root path").
 						Validate(func(s string) error {
 							if s == "" {
 								return errors.New("path cannot be empty")
@@ -143,7 +143,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		if err := ui.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
-					Title("Name for this root").
+					Title("name for this root").
 					Placeholder(defaultName).
 					Value(&rootName),
 			),
@@ -167,7 +167,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		if err := ui.NewForm(
 			huh.NewGroup(
 				huh.NewConfirm().
-					Title("Add another root?").
+					Title("add another root?").
 					Value(&addAnother),
 			),
 		).Run(); err != nil {
@@ -186,16 +186,16 @@ func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
 	if err := ui.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Title("Full name (git user.name)").
+				Title("full name").
 				Value(&name),
 			huh.NewInput().
-				Title("Email (git user.email)").
+				Title("email").
 				Value(&email),
 			huh.NewInput().
-				Title("GitHub username (gh_user) — optional").
+				Title("github username (optional)").
 				Value(&ghUser),
 			huh.NewInput().
-				Title("Profile name").
+				Title("profile name").
 				Placeholder("personal").
 				Value(&profileName),
 		),
@@ -224,7 +224,7 @@ func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) e
 		if err := ui.NewForm(
 			huh.NewGroup(
 				huh.NewConfirm().
-					Title(fmt.Sprintf("Map %q to the %q profile?", root.Path, profileName)).
+					Title(fmt.Sprintf("map %q to the %q profile?", root.Path, profileName)).
 					Value(&mapIt),
 			),
 		).Run(); err != nil {
@@ -245,7 +245,7 @@ func setupAIKey(f *factory.Factory, cfg *config.Config) error {
 	if err := ui.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Title("AI API key (leave blank to skip; stored in ~/.config/may/config.yaml)").
+				Title("ai api key (optional, leave blank to skip)").
 				EchoMode(huh.EchoModePassword).
 				Value(&apiKey),
 		),

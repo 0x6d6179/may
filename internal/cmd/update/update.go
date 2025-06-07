@@ -18,7 +18,7 @@ import (
 func NewCmdUpdate(f *factory.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "update",
-		Short: "Update may to the latest release",
+		Short: "update may to the latest release",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUpdate(f)
@@ -102,7 +102,7 @@ func runUpdate(f *factory.Factory) error {
 		return err
 	}
 
-	fmt.Fprintf(f.IO.ErrOut, "updated to %s\n", release.TagName)
+	fmt.Fprintf(f.IO.ErrOut, "✓ updated to %s\n", release.TagName)
 	return nil
 }
 

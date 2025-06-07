@@ -13,7 +13,7 @@ import (
 func NewCmdWtClose(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "close",
-		Short: "Close the current worktree and return to main",
+		Short: "close the current worktree and return to main",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}
@@ -56,6 +56,8 @@ func NewCmdWtClose(f *factory.Factory) *cobra.Command {
 			if _, err := mainRunner.Run("pull"); err != nil {
 				fmt.Fprintf(f.IO.ErrOut, "warning: pull: %v\n", err)
 			}
+
+			fmt.Fprintf(f.IO.ErrOut, "✓ closed worktree, returned to main\n  - location: %s\n", mainPath)
 
 			return nil
 		},

@@ -7,13 +7,25 @@ import (
 	"time"
 
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func mayTheme() *huh.Theme {
 	t := huh.ThemeCharm()
 
-	t.Focused.SelectSelector = t.Focused.SelectSelector.SetString("❯ ")
-	t.Focused.MultiSelectSelector = t.Focused.MultiSelectSelector.SetString("❯ ")
+	lavender := lipgloss.Color("#C9B8FF")
+	rose := lipgloss.Color("#FFB3C6")
+	mint := lipgloss.Color("#A8F5CF")
+	sky := lipgloss.Color("#B8D9FF")
+
+	t.Focused.Title = t.Focused.Title.Foreground(lavender)
+	t.Blurred.Title = t.Blurred.Title.Foreground(lavender)
+
+	t.Focused.SelectSelector = t.Focused.SelectSelector.SetString("→ ").Foreground(rose)
+	t.Focused.MultiSelectSelector = t.Focused.MultiSelectSelector.SetString("→ ").Foreground(rose)
+
+	t.Focused.SelectedOption = t.Focused.SelectedOption.Foreground(mint)
+	t.Focused.Description = t.Focused.Description.Foreground(sky)
 
 	t.Focused.SelectedPrefix = t.Focused.SelectedPrefix.SetString("◆ ")
 	t.Focused.UnselectedPrefix = t.Focused.UnselectedPrefix.SetString("◇ ")

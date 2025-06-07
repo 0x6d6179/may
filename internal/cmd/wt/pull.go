@@ -11,7 +11,7 @@ import (
 func NewCmdWtPull(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pull",
-		Short: "Fetch origin and merge origin/main",
+		Short: "fetch origin and merge origin/main",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}

@@ -8,13 +8,14 @@ import (
 
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/git"
+	"github.com/0x6d6179/may/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 func NewCmdWtNew(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new [branch]",
-		Short: "Create a new worktree",
+		Short: "create a new worktree",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}
@@ -50,8 +51,10 @@ func NewCmdWtNew(f *factory.Factory) *cobra.Command {
 
 			shadowPath := filepath.Join(matchingRootPath, ".worktrees", repoName, sanitized)
 
-			fmt.Fprintf(f.IO.ErrOut, "creating worktree: %s\n", shadowPath)
-			if _, err := runner.Run("worktree", "add", "-b", args[0], shadowPath); err != nil {
+			stop := ui.Spinner(f.IO.ErrOut, "creating worktree...")
+			_, err = runner.Run("worktree", "add", "-b", args[0], shadowPath)
+			stop()
+			if err != nil {
 				return err
 			}
 
@@ -65,6 +68,7 @@ func NewCmdWtNew(f *factory.Factory) *cobra.Command {
 			}
 
 			fmt.Fprintln(f.IO.Out, shadowPath)
+			fmt.Fprintf(f.IO.ErrOut, "✓ worktree created: %s\n  - location: %s\n", args[0], shadowPath)
 			return nil
 		},
 	}

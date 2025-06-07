@@ -13,7 +13,7 @@ import (
 func NewCmdIdUnmap(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unmap [path]",
-		Short: "Remove a directory-to-profile mapping",
+		Short: "remove a directory-to-profile mapping",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := ""
@@ -54,7 +54,7 @@ func NewCmdIdUnmap(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "removed mapping for %s\n", path)
+			fmt.Fprintf(f.IO.ErrOut, "✓ removed mapping: %s\n", path)
 			return nil
 		},
 	}

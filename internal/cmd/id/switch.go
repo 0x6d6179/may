@@ -14,7 +14,7 @@ import (
 func NewCmdIdSwitch(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "switch <profile-name>",
-		Short: "Switch the git identity for the current directory",
+		Short: "switch the git identity for the current directory",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			profileName := args[0]
@@ -49,7 +49,7 @@ func NewCmdIdSwitch(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "switched to %s (%s <%s>)\n", profileName, found.username, found.email)
+			fmt.Fprintf(f.IO.ErrOut, "✓ identity switched to %s\n  - identity: %s <%s>\n", profileName, found.username, found.email)
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

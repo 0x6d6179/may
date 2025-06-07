@@ -17,7 +17,7 @@ import (
 func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "may",
-		Short:         "Personal productivity toolkit",
+		Short:         "personal productivity toolkit",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

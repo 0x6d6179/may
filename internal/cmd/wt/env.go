@@ -12,7 +12,7 @@ import (
 func NewCmdWtEnv(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "env",
-		Short: "Copy .env files from main worktree to current",
+		Short: "copy .env files from main worktree to current",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}
@@ -31,7 +31,7 @@ func NewCmdWtEnv(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "copied env files from %s to %s\n", mainPath, cwd)
+			fmt.Fprintf(f.IO.ErrOut, "✓ env files synced\n  - from: %s\n  - to:   %s\n", mainPath, cwd)
 			return nil
 		},
 	}

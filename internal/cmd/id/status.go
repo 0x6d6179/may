@@ -17,7 +17,7 @@ func NewCmdIdStatus(f *factory.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "status",
-		Short: "Show or apply the git identity for the current directory",
+		Short: "show or apply the git identity for the current directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
@@ -47,13 +47,13 @@ func NewCmdIdStatus(f *factory.Factory) *cobra.Command {
 					return err
 				}
 				if !quiet {
-					fmt.Fprintf(f.IO.ErrOut, "applied: %s <%s>\n", profile.Username, profile.Email)
+					fmt.Fprintf(f.IO.ErrOut, "✓ applied: %s <%s>\n", profile.Username, profile.Email)
 				}
 				return nil
 			}
 
 			if !quiet {
-				fmt.Fprintf(f.IO.ErrOut, "Name: %s, Email: %s, Profile: %s\n", profile.Username, profile.Email, profile.Name)
+				fmt.Fprintf(f.IO.ErrOut, "name:    %s\nemail:   %s\nprofile: %s\n", profile.Username, profile.Email, profile.Name)
 			}
 			return nil
 		},

@@ -14,7 +14,7 @@ import (
 func NewCmdWs(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ws",
-		Short: "Workspace management",
+		Short: "workspace management",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.ErrOut, "not a terminal")
@@ -35,16 +35,18 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 				return nil
 			}
 
+			nameByPath := make(map[string]string, len(workspaces))
 			options := make([]huh.Option[string], len(workspaces))
 			for i, ws := range workspaces {
 				options[i] = huh.NewOption(ws.Name, ws.Path)
+				nameByPath[ws.Path] = ws.Name
 			}
 
 			var selected string
 			form := ui.NewForm(
 				huh.NewGroup(
 					ui.NewSelect[string]().
-						Title("Select workspace").
+						Title("select workspace").
 						Options(options...).
 						Value(&selected),
 				),
@@ -54,6 +56,7 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
+			fmt.Fprintf(f.IO.ErrOut, "✓ workspace switched to %s!\n  - location: %s\n", nameByPath[selected], selected)
 			fmt.Fprintln(f.IO.Out, selected)
 			return nil
 		},

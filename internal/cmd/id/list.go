@@ -12,7 +12,7 @@ import (
 func NewCmdIdList(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List all git identity profiles and mappings",
+		Short: "list all git identity profiles and mappings",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -21,7 +21,7 @@ func NewCmdIdList(f *factory.Factory) *cobra.Command {
 
 			if len(cfg.Git.Profiles) > 0 {
 				w := ui.NewTable(f.IO.ErrOut)
-				fmt.Fprintln(w, "NAME\tUSERNAME\tEMAIL\tGH_USER")
+				fmt.Fprintln(w, "name\tusername\temail\tgh_user")
 				for _, p := range cfg.Git.Profiles {
 					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Name, p.Username, p.Email, p.GHUser)
 				}
@@ -30,7 +30,7 @@ func NewCmdIdList(f *factory.Factory) *cobra.Command {
 
 			if len(cfg.Git.Mappings) > 0 {
 				w := ui.NewTable(f.IO.ErrOut)
-				fmt.Fprintln(w, "PATH\tPROFILE")
+				fmt.Fprintln(w, "path\tprofile")
 				for _, m := range cfg.Git.Mappings {
 					fmt.Fprintf(w, "%s\t%s\n", m.Path, m.Profile)
 				}

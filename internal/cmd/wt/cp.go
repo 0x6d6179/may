@@ -13,7 +13,7 @@ import (
 func NewCmdWtCp(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cp [relpath]",
-		Short: "Copy a file or directory from main worktree to current",
+		Short: "copy a file or directory from main worktree to current",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}
@@ -46,7 +46,7 @@ func NewCmdWtCp(f *factory.Factory) *cobra.Command {
 				}
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "copied %s to %s\n", src, dst)
+			fmt.Fprintf(f.IO.ErrOut, "✓ copied %s → %s\n", src, dst)
 			return nil
 		},
 	}

@@ -19,7 +19,7 @@ import (
 func NewCmdCommit(f *factory.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "commit",
-		Short: "AI conventional commit",
+		Short: "ai conventional commit",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !term.IsTerminal(int(os.Stdin.Fd())) {
 				fmt.Fprintln(f.IO.ErrOut, "not a terminal")
@@ -47,7 +47,7 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 				if err := ui.NewForm(
 					huh.NewGroup(
 						huh.NewConfirm().
-							Title("Stage all changes?").
+							Title("stage all changes?").
 							Value(&stageAll),
 					),
 				).Run(); err != nil {
@@ -89,7 +89,7 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 				if err := ui.NewForm(
 					huh.NewGroup(
 						huh.NewInput().
-							Title("Commit message:").
+							Title("commit message").
 							Value(&custom),
 					),
 				).Run(); err != nil {
@@ -102,8 +102,9 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			_ = out
 
-			fmt.Fprintln(f.IO.ErrOut, out)
+			fmt.Fprintf(f.IO.ErrOut, "✓ committed: %s\n", selected)
 			return nil
 		},
 	}
@@ -116,7 +117,7 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 		if err := ui.NewForm(
 			huh.NewGroup(
 				ui.NewSelect[string]().
-					Title("Choose commit message").
+					Title("choose commit message").
 					Options(
 						huh.NewOption("Enter custom message", "__custom__"),
 						huh.NewOption("Abort", "__abort__"),

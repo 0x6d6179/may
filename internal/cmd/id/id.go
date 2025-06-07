@@ -9,7 +9,7 @@ import (
 func NewCmdId(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "id",
-		Short: "Git identity management",
+		Short: "git identity management",
 	}
 
 	cmd.AddCommand(NewCmdIdStatus(f))

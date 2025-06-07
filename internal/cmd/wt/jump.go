@@ -11,7 +11,7 @@ import (
 func NewCmdWtJump(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "jump",
-		Short: "Jump to the main worktree",
+		Short: "jump to the main worktree",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}

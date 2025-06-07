@@ -12,7 +12,7 @@ import (
 func NewCmdWtList(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List all worktrees",
+		Short: "list all worktrees",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}
@@ -23,7 +23,7 @@ func NewCmdWtList(f *factory.Factory) *cobra.Command {
 			}
 
 			w := ui.NewTable(f.IO.ErrOut)
-			fmt.Fprintln(w, "PATH\tBRANCH\tMAIN")
+			fmt.Fprintln(w, "path\tbranch\tmain")
 			for _, wt := range worktrees {
 				main := ""
 				if wt.IsMain {

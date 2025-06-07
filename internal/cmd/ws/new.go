@@ -13,7 +13,7 @@ func NewCmdWsNew(f *factory.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "new [name]",
-		Short: "Create a new workspace",
+		Short: "create a new workspace",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -36,7 +36,7 @@ func NewCmdWsNew(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(f.IO.ErrOut, "created workspace:", path)
+			fmt.Fprintf(f.IO.ErrOut, "✓ workspace created: %s\n  - location: %s\n", name, path)
 			fmt.Fprintln(f.IO.Out, path)
 			return nil
 		},

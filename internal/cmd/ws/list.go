@@ -12,7 +12,7 @@ import (
 func NewCmdWsList(f *factory.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "List all workspaces",
+		Short: "list all workspaces",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

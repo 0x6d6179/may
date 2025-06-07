@@ -16,7 +16,7 @@ func NewCmdIdMap(f *factory.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "map",
-		Short: "Map a directory path to a git identity profile",
+		Short: "map a directory path to a git identity profile",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if path == "" {
 				cwd, err := os.Getwd()
@@ -40,7 +40,7 @@ func NewCmdIdMap(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "mapped %s → %s\n", path, profileName)
+			fmt.Fprintf(f.IO.ErrOut, "✓ mapped %s → %s\n", path, profileName)
 			return nil
 		},
 	}

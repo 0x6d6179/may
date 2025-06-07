@@ -13,7 +13,7 @@ import (
 func NewCmdWsSearch(f *factory.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "search [query]",
-		Short: "Search workspaces by name",
+		Short: "search workspaces by name",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

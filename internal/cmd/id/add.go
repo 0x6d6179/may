@@ -15,7 +15,7 @@ import (
 func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
-		Short: "Add a new git identity profile",
+		Short: "add a new git identity profile",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.ErrOut, "not a terminal")
@@ -32,16 +32,16 @@ func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 			form := ui.NewForm(
 				huh.NewGroup(
 					huh.NewInput().
-						Title("Profile name").
+						Title("profile name").
 						Value(&name),
 					huh.NewInput().
-						Title("Git username").
+						Title("git username").
 						Value(&username),
 					huh.NewInput().
-						Title("Git email").
+						Title("git email").
 						Value(&email),
 					huh.NewInput().
-						Title("GitHub username").
+						Title("github username").
 						Value(&ghUser),
 				),
 			)
@@ -61,7 +61,7 @@ func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "added profile %q\n", name)
+			fmt.Fprintf(f.IO.ErrOut, "✓ added profile: %s\n", name)
 			return nil
 		},
 	}

@@ -13,21 +13,17 @@ const zshShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
 
   function ws() {
     local _may_out
-    _may_out=$(may ws "$@" 2>/dev/null)
-    if [[ -d "$_may_out" ]]; then
+    _may_out=$(may ws "$@" 2>/dev/tty)
+    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
-    else
-      may ws "$@"
     fi
   }
 
   function wt() {
     local _may_out
-    _may_out=$(may wt "$@" 2>/dev/null)
-    if [[ -d "$_may_out" ]]; then
+    _may_out=$(may wt "$@" 2>/dev/tty)
+    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
-    else
-      may wt "$@"
     fi
   }
 
@@ -44,21 +40,17 @@ const bashShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
 
   function ws() {
     local _may_out
-    _may_out=$(may ws "$@" 2>/dev/null)
-    if [[ -d "$_may_out" ]]; then
+    _may_out=$(may ws "$@" 2>/dev/tty)
+    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
-    else
-      may ws "$@"
     fi
   }
 
   function wt() {
     local _may_out
-    _may_out=$(may wt "$@" 2>/dev/null)
-    if [[ -d "$_may_out" ]]; then
+    _may_out=$(may wt "$@" 2>/dev/tty)
+    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
       builtin cd "$_may_out"
-    else
-      may wt "$@"
     fi
   }
 
@@ -72,20 +64,16 @@ const fishShim = `if not set -q _MAY_SHELL_INIT
   set -gx _MAY_SHELL_INIT 1
 
   function ws
-    set _may_out (may ws $argv 2>/dev/null)
-    if test -d "$_may_out"
+    set _may_out (may ws $argv 2>/dev/tty)
+    if test -n "$_may_out" -a -d "$_may_out"
       builtin cd "$_may_out"
-    else
-      may ws $argv
     end
   end
 
   function wt
-    set _may_out (may wt $argv 2>/dev/null)
-    if test -d "$_may_out"
+    set _may_out (may wt $argv 2>/dev/tty)
+    if test -n "$_may_out" -a -d "$_may_out"
       builtin cd "$_may_out"
-    else
-      may wt $argv
     end
   end
 
@@ -100,7 +88,7 @@ end
 func NewCmdShellInit(f *factory.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "init [bash|zsh|fish]",
-		Short: "Emit a shell integration shim",
+		Short: "emit a shell integration shim",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			shell := args[0]

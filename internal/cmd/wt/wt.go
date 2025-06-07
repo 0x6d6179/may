@@ -14,7 +14,7 @@ import (
 func NewCmdWt(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wt",
-		Short: "Git worktree manager",
+		Short: "git worktree manager",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.ErrOut, "not a terminal")
@@ -35,16 +35,18 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 				return nil
 			}
 
+			branchByPath := make(map[string]string, len(worktrees))
 			options := make([]huh.Option[string], len(worktrees))
 			for i, wt := range worktrees {
 				options[i] = huh.NewOption(wt.Branch, wt.Path)
+				branchByPath[wt.Path] = wt.Branch
 			}
 
 			var selected string
 			form := ui.NewForm(
 				huh.NewGroup(
 					ui.NewSelect[string]().
-						Title("Select worktree").
+						Title("select worktree").
 						Options(options...).
 						Value(&selected),
 				),
@@ -54,6 +56,7 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
+			fmt.Fprintf(f.IO.ErrOut, "✓ jumped to %s\n  - location: %s\n", branchByPath[selected], selected)
 			fmt.Fprintln(f.IO.Out, selected)
 			return nil
 		},
