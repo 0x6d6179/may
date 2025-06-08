@@ -36,7 +36,7 @@ func NewCmdWsNew(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ workspace created: %s\n  - location: %s\n", name, path)
+			fmt.Fprintf(f.IO.ErrOut, "✓ workspace created: %s\n", name)
 			fmt.Fprintln(f.IO.Out, path)
 			return nil
 		},

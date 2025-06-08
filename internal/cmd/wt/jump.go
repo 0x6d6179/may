@@ -21,7 +21,7 @@ func NewCmdWtJump(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ jumped to main\n  - location: %s\n", mainPath)
+			fmt.Fprintf(f.IO.ErrOut, "✓ jumped to main\n")
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.Out, mainPath)
 			}

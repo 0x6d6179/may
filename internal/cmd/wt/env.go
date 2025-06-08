@@ -31,7 +31,7 @@ func NewCmdWtEnv(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ env files synced\n  - from: %s\n  - to:   %s\n", mainPath, cwd)
+			fmt.Fprintf(f.IO.ErrOut, "✓ env files synced\n")
 			return nil
 		},
 	}

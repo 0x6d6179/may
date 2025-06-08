@@ -59,7 +59,7 @@ func NewCmdWtClose(f *factory.Factory) *cobra.Command {
 				fmt.Fprintf(f.IO.ErrOut, "warning: pull: %v\n", err)
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ closed worktree, returned to main\n  - location: %s\n", mainPath)
+			fmt.Fprintf(f.IO.ErrOut, "✓ closed worktree\n")
 
 			return nil
 		},

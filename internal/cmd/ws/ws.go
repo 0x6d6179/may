@@ -42,11 +42,11 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 				nameByPath[ws.Path] = ws.Name
 			}
 
+			ui.Header(f.IO.ErrOut, "select workspace")
 			var selected string
 			form := ui.NewForm(
 				huh.NewGroup(
 					ui.NewSelect[string]().
-						Title("select workspace").
 						Options(options...).
 						Value(&selected),
 				),
@@ -56,7 +56,7 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ workspace switched to %s!\n  - location: %s\n", nameByPath[selected], selected)
+			fmt.Fprintf(f.IO.ErrOut, "✓ workspace switched to %s\n", nameByPath[selected])
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.Out, selected)
 			}

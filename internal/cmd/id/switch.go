@@ -49,7 +49,7 @@ func NewCmdIdSwitch(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ identity switched to %s\n  - identity: %s <%s>\n", profileName, found.username, found.email)
+			fmt.Fprintf(f.IO.ErrOut, "✓ identity: %s\n", profileName)
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

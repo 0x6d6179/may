@@ -70,7 +70,7 @@ func NewCmdWtNew(f *factory.Factory) *cobra.Command {
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.Out, shadowPath)
 			}
-			fmt.Fprintf(f.IO.ErrOut, "✓ worktree created: %s\n  - location: %s\n", args[0], shadowPath)
+			fmt.Fprintf(f.IO.ErrOut, "✓ worktree created: %s\n", args[0])
 			return nil
 		},
 	}

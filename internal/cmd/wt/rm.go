@@ -74,7 +74,7 @@ func NewCmdWtRm(f *factory.Factory) *cobra.Command {
 				fmt.Fprintf(f.IO.ErrOut, "warning: worktree prune: %v\n", err)
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ removed worktree: %s\n  - location: %s\n", targetBranch, targetPath)
+			fmt.Fprintf(f.IO.ErrOut, "✓ removed worktree: %s\n", targetBranch)
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

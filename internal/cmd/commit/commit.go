@@ -31,6 +31,7 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
+			ui.Header(f.IO.ErrOut, "commit")
 			runner := &git.Runner{}
 
 			staged, _ := runner.Run("diff", "--cached")
@@ -117,7 +118,6 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 		if err := ui.NewForm(
 			huh.NewGroup(
 				ui.NewSelect[string]().
-					Title("choose commit message").
 					Options(
 						huh.NewOption("Enter custom message", "__custom__"),
 						huh.NewOption("Abort", "__abort__"),
@@ -133,7 +133,6 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 	if err := ui.NewForm(
 		huh.NewGroup(
 			ui.NewSelect[string]().
-				Title("Choose commit message").
 				Options(
 					huh.NewOption(msgs.Primary, msgs.Primary),
 					huh.NewOption(msgs.Alt1, msgs.Alt1),

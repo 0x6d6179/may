@@ -42,11 +42,11 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 				branchByPath[wt.Path] = wt.Branch
 			}
 
+			ui.Header(f.IO.ErrOut, "select worktree")
 			var selected string
 			form := ui.NewForm(
 				huh.NewGroup(
 					ui.NewSelect[string]().
-						Title("select worktree").
 						Options(options...).
 						Value(&selected),
 				),
@@ -56,7 +56,7 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ jumped to %s\n  - location: %s\n", branchByPath[selected], selected)
+			fmt.Fprintf(f.IO.ErrOut, "✓ jumped to %s\n", branchByPath[selected])
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.Out, selected)
 			}

@@ -46,6 +46,7 @@ func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 				),
 			)
 
+			ui.Header(f.IO.ErrOut, "add identity")
 			if err := form.Run(); err != nil {
 				return err
 			}

@@ -3,11 +3,14 @@ package ui
 import (
 	"fmt"
 	"io"
+	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/term"
 )
 
 func mayTheme() *huh.Theme {
@@ -80,4 +83,26 @@ func Spinner(w io.Writer, label string) (stop func()) {
 // NewTable returns a tabwriter.Writer with project-wide consistent settings.
 func NewTable(w io.Writer) *tabwriter.Writer {
 	return tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+}
+
+// Header prints a lavender-colored "title ─────────────────" line to w,
+// filling to terminal width. Call immediately before form.Run().
+func Header(w io.Writer, title string) {
+	width := termWidth()
+	fill := width - len(title) - 1
+	if fill < 1 {
+		fill = 1
+	}
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color("#C9B8FF"))
+	fmt.Fprintln(w, style.Render(title+" "+strings.Repeat("─", fill)))
+}
+
+func termWidth() int {
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+		return w
+	}
+	if w, _, err := term.GetSize(int(os.Stderr.Fd())); err == nil && w > 0 {
+		return w
+	}
+	return 80
 }

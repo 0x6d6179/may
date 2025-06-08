@@ -103,6 +103,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		}
 		opts = append(opts, huh.NewOption("Enter custom path", "__custom__"))
 
+		ui.Header(f.IO.ErrOut, "workspace roots")
 		var rootPath string
 		if err := ui.NewForm(
 			huh.NewGroup(
@@ -183,6 +184,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
 	var name, email, ghUser, profileName string
 
+	ui.Header(f.IO.ErrOut, "git identity")
 	if err := ui.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
@@ -242,6 +244,7 @@ func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) e
 
 func setupAIKey(f *factory.Factory, cfg *config.Config) error {
 	var apiKey string
+	ui.Header(f.IO.ErrOut, "ai setup")
 	if err := ui.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
