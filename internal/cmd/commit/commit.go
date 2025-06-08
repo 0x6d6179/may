@@ -118,6 +118,7 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 		if err := ui.NewForm(
 			huh.NewGroup(
 				ui.NewSelect[string]().
+					Title("choose commit message").
 					Options(
 						huh.NewOption("Enter custom message", "__custom__"),
 						huh.NewOption("Abort", "__abort__"),
@@ -133,6 +134,7 @@ func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
 	if err := ui.NewForm(
 		huh.NewGroup(
 			ui.NewSelect[string]().
+				Title("choose commit message").
 				Options(
 					huh.NewOption(msgs.Primary, msgs.Primary),
 					huh.NewOption(msgs.Alt1, msgs.Alt1),

@@ -98,11 +98,18 @@ func Header(w io.Writer, title string) {
 }
 
 func termWidth() int {
+	const max = 80
 	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+		if w > max {
+			return max
+		}
 		return w
 	}
 	if w, _, err := term.GetSize(int(os.Stderr.Fd())); err == nil && w > 0 {
+		if w > max {
+			return max
+		}
 		return w
 	}
-	return 80
+	return max
 }

@@ -47,6 +47,7 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 			form := ui.NewForm(
 				huh.NewGroup(
 					ui.NewSelect[string]().
+						Title("select worktree").
 						Options(options...).
 						Value(&selected),
 				),

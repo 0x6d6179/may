@@ -47,6 +47,7 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 			form := ui.NewForm(
 				huh.NewGroup(
 					ui.NewSelect[string]().
+						Title("select workspace").
 						Options(options...).
 						Value(&selected),
 				),
