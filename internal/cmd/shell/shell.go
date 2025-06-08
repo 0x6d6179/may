@@ -6,13 +6,16 @@ import (
 )
 
 // NewCmdShell returns the shell group command.
-func NewCmdShell(f *factory.Factory) *cobra.Command {
+func NewCmdShell(f *factory.Factory, rootCmd *cobra.Command) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "shell",
-		Short: "Shell integration",
+		Short: "shell integration",
 	}
 
 	cmd.AddCommand(NewCmdShellInit(f))
+	cmd.AddCommand(NewCmdShellCompletion(f, rootCmd))
+	cmd.AddCommand(NewCmdShellAlias(f))
+	cmd.AddCommand(NewCmdShellInstall(f))
 
 	return cmd
 }

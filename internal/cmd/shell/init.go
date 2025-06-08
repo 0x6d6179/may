@@ -31,7 +31,7 @@ const zshShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
   function _may_id_hook() { may id status --apply --quiet }
   add-zsh-hook chpwd _may_id_hook
 
-  eval "$(may completion zsh)"
+  eval "$(may shell completion zsh)"
 fi
 `
 
@@ -56,7 +56,7 @@ const bashShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
 
   PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}may id status --apply --quiet"
 
-  eval "$(may completion bash)"
+  eval "$(may shell completion bash)"
 fi
 `
 
@@ -81,7 +81,7 @@ const fishShim = `if not set -q _MAY_SHELL_INIT
     may id status --apply --quiet
   end
 
-  may completion fish | source
+  may shell completion fish | source
 end
 `
 
@@ -89,9 +89,12 @@ func NewCmdShellInit(f *factory.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "init [bash|zsh|fish]",
 		Short: "emit a shell integration shim",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			shell := args[0]
+			shell, err := resolveShell(args)
+			if err != nil {
+				return err
+			}
 			switch shell {
 			case "zsh":
 				fmt.Fprint(f.IO.Out, zshShim)

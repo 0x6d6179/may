@@ -28,10 +28,22 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	cmd.AddCommand(wt.NewCmdWt(f))
 	cmd.AddCommand(commit.NewCmdCommit(f))
 	cmd.AddCommand(id.NewCmdId(f))
-	cmd.AddCommand(shell.NewCmdShell(f))
-	cmd.AddCommand(completion.NewCmdCompletion(f, cmd))
+	cmd.AddCommand(shell.NewCmdShell(f, cmd))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(initcmd.NewCmdInit(f))
+
+	// hidden backward-compat completion command
+	completionCmd := completion.NewCmdCompletion(f, cmd)
+	completionCmd.Hidden = true
+	cmd.AddCommand(completionCmd)
+
+	// lowercase cobra's built-in help command
+	cmd.InitDefaultHelpCmd()
+	for _, c := range cmd.Commands() {
+		if c.Name() == "help" {
+			c.Short = "help about any command"
+		}
+	}
 
 	return cmd
 }
