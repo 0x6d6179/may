@@ -1,7 +1,6 @@
 package wt
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/0x6d6179/may/internal/factory"
@@ -16,11 +15,6 @@ func NewCmdWt(f *factory.Factory) *cobra.Command {
 		Use:   "wt",
 		Short: "git worktree manager",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !f.IO.IsTerminal() {
-				fmt.Fprintln(f.IO.ErrOut, "not a terminal")
-				return errors.New("not a terminal")
-			}
-
 			runner := &git.Runner{}
 
 			stop := ui.Spinner(f.IO.ErrOut, "loading...")

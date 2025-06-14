@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/0x6d6179/may/internal/factory"
@@ -16,11 +15,6 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 		Use:   "ws",
 		Short: "workspace management",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !f.IO.IsTerminal() {
-				fmt.Fprintln(f.IO.ErrOut, "not a terminal")
-				return errors.New("not a terminal")
-			}
-
 			cfg, err := f.Config()
 			if err != nil {
 				return err
