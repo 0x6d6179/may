@@ -22,6 +22,9 @@ func NewCmdWtJump(f *factory.Factory) *cobra.Command {
 			}
 
 			fmt.Fprintf(f.IO.ErrOut, "✓ jumped to main\n")
+			if f.IO.IsTerminal() {
+				fmt.Fprintln(f.IO.ErrOut, "→ shell integration not active · run: eval \"$(may shell init)\"")
+			}
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.Out, mainPath)
 			}

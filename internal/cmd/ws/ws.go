@@ -52,6 +52,9 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 			}
 
 			fmt.Fprintf(f.IO.ErrOut, "✓ workspace switched to %s\n", nameByPath[selected])
+			if f.IO.IsTerminal() {
+				fmt.Fprintln(f.IO.ErrOut, "→ shell integration not active · run: eval \"$(may shell init)\"")
+			}
 			if !f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.Out, selected)
 			}
