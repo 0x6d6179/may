@@ -47,7 +47,7 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 				var stageAll bool
 				if err := ui.NewForm(
 					huh.NewGroup(
-						huh.NewConfirm().
+						ui.NewConfirm().
 							Title("stage all changes?").
 							Value(&stageAll),
 					),

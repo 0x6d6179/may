@@ -167,7 +167,7 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 		var addAnother bool
 		if err := ui.NewForm(
 			huh.NewGroup(
-				huh.NewConfirm().
+				ui.NewConfirm().
 					Title("add another root?").
 					Value(&addAnother),
 			),
@@ -225,7 +225,7 @@ func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) e
 		var mapIt bool
 		if err := ui.NewForm(
 			huh.NewGroup(
-				huh.NewConfirm().
+				ui.NewConfirm().
 					Title(fmt.Sprintf("map %q to the %q profile?", root.Path, profileName)).
 					Value(&mapIt),
 			),

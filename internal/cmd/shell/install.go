@@ -57,7 +57,7 @@ func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
 			var confirm bool
 			if err := ui.NewForm(
 				huh.NewGroup(
-					huh.NewConfirm().
+					ui.NewConfirm().
 						Title(fmt.Sprintf("add to %s?", profile)).
 						Description(line).
 						Value(&confirm),

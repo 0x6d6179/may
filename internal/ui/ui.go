@@ -52,6 +52,10 @@ func NewSelect[T comparable]() *huh.Select[T] {
 	return huh.NewSelect[T]().Filtering(true)
 }
 
+func NewConfirm() *huh.Confirm {
+	return huh.NewConfirm().WithButtonAlignment(lipgloss.Left)
+}
+
 // Spinner starts a braille spinner on w with the given label.
 // Call the returned stop func when the operation completes; it clears the line.
 // stop() blocks until the line is cleared — no race with subsequent renders.
