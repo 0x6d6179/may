@@ -41,9 +41,7 @@ func mayTheme() *huh.Theme {
 // NewForm returns a huh.Form with project-wide defaults applied.
 // All forms in may must use this instead of huh.NewForm directly.
 func NewForm(groups ...*huh.Group) *huh.Form {
-	return huh.NewForm(groups...).
-		WithHeight(10).
-		WithTheme(mayTheme())
+	return huh.NewForm(groups...).WithTheme(mayTheme())
 }
 
 // NewSelect returns a huh.Select with project-wide defaults (filtering on).

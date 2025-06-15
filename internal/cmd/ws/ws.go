@@ -45,7 +45,7 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 						Options(options...).
 						Value(&selected),
 				),
-			)
+			).WithHeight(10)
 
 			if err := form.Run(); err != nil {
 				return err
