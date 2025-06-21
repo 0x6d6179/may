@@ -11,7 +11,6 @@ import (
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/git"
 	"github.com/0x6d6179/may/internal/ui"
-	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -31,7 +30,7 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			ui.Header(f.IO.ErrOut, "commit")
+			opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
 			runner := &git.Runner{}
 
 			staged, _ := runner.Run("diff", "--cached")
@@ -44,14 +43,11 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 					return errors.New("nothing to commit")
 				}
 
-				var stageAll bool
-				if err := ui.NewForm(
-					huh.NewGroup(
-						ui.NewConfirm().
-							Title("stage all changes?").
-							Value(&stageAll),
-					),
-				).Run(); err != nil {
+				stageAll, err := ui.RunConfirm(opts, ui.ConfirmSpec{Title: "stage all changes?"})
+				if errors.Is(err, ui.ErrAborted) {
+					return nil
+				}
+				if err != nil {
 					return err
 				}
 
@@ -74,9 +70,51 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 			ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 			defer cancel()
 
-			msgs, aiErr := aiClient.GenerateCommitMessages(ctx, diff)
+			result, err := ui.RunFlow[any](&commitLoadFlow{
+				ctx:    ctx,
+				diff:   diff,
+				client: aiClient,
+			}, opts)
+			if errors.Is(err, ui.ErrAborted) {
+				return nil
+			}
+			if err != nil {
+				return err
+			}
 
-			selected, err := selectCommitMessage(msgs, aiErr)
+			var msgs *ai.CommitMessages
+			var aiErr error
+			switch v := result.(type) {
+			case *ai.CommitMessages:
+				msgs = v
+			case error:
+				aiErr = v
+			}
+
+			var selectOpts []ui.Option[string]
+			if aiErr == nil && msgs != nil {
+				selectOpts = []ui.Option[string]{
+					{Label: msgs.Primary, Value: msgs.Primary},
+					{Label: msgs.Alt1, Value: msgs.Alt1},
+					{Label: msgs.Alt2, Value: msgs.Alt2},
+					{Label: msgs.Alt3, Value: msgs.Alt3},
+					{Label: "Enter custom message", Value: "__custom__"},
+					{Label: "Abort", Value: "__abort__"},
+				}
+			} else {
+				selectOpts = []ui.Option[string]{
+					{Label: "Enter custom message", Value: "__custom__"},
+					{Label: "Abort", Value: "__abort__"},
+				}
+			}
+
+			selected, err := ui.RunSelect(opts, ui.SelectSpec[string]{
+				Title:   "choose commit message",
+				Options: selectOpts,
+			})
+			if errors.Is(err, ui.ErrAborted) {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
@@ -86,14 +124,11 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 			}
 
 			if selected == "__custom__" {
-				var custom string
-				if err := ui.NewForm(
-					huh.NewGroup(
-						huh.NewInput().
-							Title("commit message").
-							Value(&custom),
-					),
-				).Run(); err != nil {
+				custom, err := ui.RunInput(opts, ui.InputSpec{Title: "commit message"})
+				if errors.Is(err, ui.ErrAborted) {
+					return nil
+				}
+				if err != nil {
 					return err
 				}
 				selected = custom
@@ -111,43 +146,22 @@ func NewCmdCommit(f *factory.Factory) *cobra.Command {
 	}
 }
 
-func selectCommitMessage(msgs *ai.CommitMessages, aiErr error) (string, error) {
-	var selected string
+type commitLoadFlow struct {
+	ctx    context.Context
+	diff   string
+	client *ai.Client
+}
 
-	if aiErr != nil || msgs == nil {
-		if err := ui.NewForm(
-			huh.NewGroup(
-				ui.NewSelect[string]().
-					Title("choose commit message").
-					Options(
-						huh.NewOption("Enter custom message", "__custom__"),
-						huh.NewOption("Abort", "__abort__"),
-					).
-					Value(&selected),
-			),
-		).Run(); err != nil {
-			return "", err
-		}
-		return selected, nil
-	}
+func (f *commitLoadFlow) Start() ui.Step {
+	return ui.NewLoading[*ai.CommitMessages](ui.LoadingSpec[*ai.CommitMessages]{
+		Title: "commit",
+		Label: "generating commit messages…",
+		Task: func() (*ai.CommitMessages, error) {
+			return f.client.GenerateCommitMessages(f.ctx, f.diff)
+		},
+	})
+}
 
-	if err := ui.NewForm(
-		huh.NewGroup(
-			ui.NewSelect[string]().
-				Title("choose commit message").
-				Options(
-					huh.NewOption(msgs.Primary, msgs.Primary),
-					huh.NewOption(msgs.Alt1, msgs.Alt1),
-					huh.NewOption(msgs.Alt2, msgs.Alt2),
-					huh.NewOption(msgs.Alt3, msgs.Alt3),
-					huh.NewOption("Enter custom message", "__custom__"),
-					huh.NewOption("Abort", "__abort__"),
-				).
-				Value(&selected),
-		),
-	).Run(); err != nil {
-		return "", err
-	}
-
-	return selected, nil
+func (f *commitLoadFlow) Next(_ any) (ui.Step, bool, error) {
+	return nil, true, nil
 }
