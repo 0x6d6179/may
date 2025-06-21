@@ -223,6 +223,10 @@ func (m *SelectModel[T]) View() string {
 	return b.String()
 }
 
+func NewSelectStep[T comparable](spec SelectSpec[T]) *SelectModel[T] {
+	return newSelect(spec)
+}
+
 func RunSelect[T comparable](opts RunOptions, spec SelectSpec[T]) (T, error) {
 	m := newSelect(spec)
 	flow := &singleStepFlow{step: m}

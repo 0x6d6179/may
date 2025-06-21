@@ -80,6 +80,10 @@ func (m *ConfirmModel) View() string {
 	return b.String()
 }
 
+func NewConfirmStep(spec ConfirmSpec) *ConfirmModel {
+	return newConfirm(spec)
+}
+
 func RunConfirm(opts RunOptions, spec ConfirmSpec) (bool, error) {
 	m := newConfirm(spec)
 	flow := &singleStepFlow{step: m}

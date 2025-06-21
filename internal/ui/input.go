@@ -97,6 +97,10 @@ func (m *InputModel) View() string {
 	return b.String()
 }
 
+func NewInputStep(spec InputSpec) *InputModel {
+	return newInput(spec)
+}
+
 func RunInput(opts RunOptions, spec InputSpec) (string, error) {
 	m := newInput(spec)
 	flow := &singleStepFlow{step: m}

@@ -1,14 +1,51 @@
 package ws
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/0x6d6179/may/internal/config"
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/ui"
 	"github.com/0x6d6179/may/internal/workspace"
-	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
+
+type wsFlow struct {
+	cfg        *config.Config
+	nameByPath map[string]string
+}
+
+func (f *wsFlow) Start() ui.Step {
+	return ui.NewLoading(ui.LoadingSpec[[]workspace.Workspace]{
+		Title: "select workspace",
+		Label: "loading...",
+		Task:  func() ([]workspace.Workspace, error) { return workspace.List(f.cfg), nil },
+	})
+}
+
+func (f *wsFlow) Next(result any) (ui.Step, bool, error) {
+	switch v := result.(type) {
+	case []workspace.Workspace:
+		if len(v) == 0 {
+			return nil, false, errors.New("no workspaces configured")
+		}
+		f.nameByPath = make(map[string]string, len(v))
+		options := make([]ui.Option[string], len(v))
+		for i, ws := range v {
+			options[i] = ui.Option[string]{Label: ws.Name, Value: ws.Path}
+			f.nameByPath[ws.Path] = ws.Name
+		}
+		return ui.NewSelectStep(ui.SelectSpec[string]{
+			Title:   "select workspace",
+			Options: options,
+			Height:  10,
+		}), false, nil
+	case string:
+		return nil, true, nil
+	}
+	return nil, true, nil
+}
 
 func NewCmdWs(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
@@ -20,38 +57,18 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			stop := ui.Spinner(f.IO.ErrOut, "loading...")
-			workspaces := workspace.List(cfg)
-			stop()
-
-			if len(workspaces) == 0 {
-				fmt.Fprintln(f.IO.ErrOut, "no workspaces configured")
+			flow := &wsFlow{cfg: cfg}
+			selected, err := ui.RunFlow[string](flow, ui.RunOptions{
+				In: f.IO.In, Out: f.IO.ErrOut,
+			})
+			if errors.Is(err, ui.ErrAborted) {
 				return nil
 			}
-
-			nameByPath := make(map[string]string, len(workspaces))
-			options := make([]huh.Option[string], len(workspaces))
-			for i, ws := range workspaces {
-				options[i] = huh.NewOption(ws.Name, ws.Path)
-				nameByPath[ws.Path] = ws.Name
-			}
-
-			ui.Header(f.IO.ErrOut, "select workspace")
-			var selected string
-			form := ui.NewForm(
-				huh.NewGroup(
-					ui.NewSelect[string]().
-						Title("select workspace").
-						Options(options...).
-						Value(&selected),
-				),
-			).WithHeight(10)
-
-			if err := form.Run(); err != nil {
+			if err != nil {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ workspace switched to %s\n", nameByPath[selected])
+			fmt.Fprintf(f.IO.ErrOut, "✓ workspace switched to %s\n", flow.nameByPath[selected])
 			if f.IO.IsTerminal() {
 				fmt.Fprintln(f.IO.ErrOut, "→ shell integration not active · run: eval \"$(may shell init)\"")
 			}

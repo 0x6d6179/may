@@ -22,12 +22,12 @@ type FormSpec struct {
 }
 
 type FormModel struct {
-	title   string
-	fields  []InputField
-	inputs  []textinput.Model
-	focus   int
-	errs    []error
-	width   int
+	title  string
+	fields []InputField
+	inputs []textinput.Model
+	focus  int
+	errs   []error
+	width  int
 }
 
 func newForm(spec FormSpec) *FormModel {
@@ -178,6 +178,10 @@ func (m *FormModel) View() string {
 	}
 
 	return b.String()
+}
+
+func NewFormStep(spec FormSpec) *FormModel {
+	return newForm(spec)
 }
 
 func RunForm(opts RunOptions, spec FormSpec) (map[string]string, error) {
