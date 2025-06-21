@@ -9,7 +9,6 @@ import (
 	"github.com/0x6d6179/may/internal/config"
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/ui"
-	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
 
@@ -96,59 +95,56 @@ func detectWorkspaceDirs() []string {
 }
 
 func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []string) error {
-	for {
-		opts := make([]huh.Option[string], 0, len(detected)+1)
-		for _, p := range detected {
-			opts = append(opts, huh.NewOption(p, p))
-		}
-		opts = append(opts, huh.NewOption("Enter custom path", "__custom__"))
+	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
 
-		ui.Header(f.IO.ErrOut, "workspace roots")
-		var rootPath string
-		if err := ui.NewForm(
-			huh.NewGroup(
-				ui.NewSelect[string]().
-					Title("primary workspace root").
-					Options(opts...).
-					Value(&rootPath),
-			),
-		).Run(); err != nil {
+	for {
+		selectOpts := make([]ui.Option[string], 0, len(detected)+1)
+		for _, p := range detected {
+			selectOpts = append(selectOpts, ui.Option[string]{Label: p, Value: p})
+		}
+		selectOpts = append(selectOpts, ui.Option[string]{Label: "Enter custom path", Value: "__custom__"})
+
+		rootPath, err := ui.RunSelect(opts, ui.SelectSpec[string]{
+			Title:   "primary workspace root",
+			Options: selectOpts,
+		})
+		if errors.Is(err, ui.ErrAborted) {
+			return err
+		}
+		if err != nil {
 			return err
 		}
 
 		if rootPath == "__custom__" {
-			var customPath string
-			if err := ui.NewForm(
-				huh.NewGroup(
-					huh.NewInput().
-						Title("workspace root path").
-						Validate(func(s string) error {
-							if s == "" {
-								return errors.New("path cannot be empty")
-							}
-							if _, err := os.Stat(s); err != nil {
-								return fmt.Errorf("path does not exist: %s", s)
-							}
-							return nil
-						}).
-						Value(&customPath),
-				),
-			).Run(); err != nil {
+			rootPath, err = ui.RunInput(opts, ui.InputSpec{
+				Title: "workspace root path",
+				Validate: func(s string) error {
+					if s == "" {
+						return errors.New("path cannot be empty")
+					}
+					if _, err := os.Stat(s); err != nil {
+						return fmt.Errorf("path does not exist: %s", s)
+					}
+					return nil
+				},
+			})
+			if errors.Is(err, ui.ErrAborted) {
 				return err
 			}
-			rootPath = customPath
+			if err != nil {
+				return err
+			}
 		}
 
 		defaultName := filepath.Base(rootPath)
-		var rootName string
-		if err := ui.NewForm(
-			huh.NewGroup(
-				huh.NewInput().
-					Title("name for this root").
-					Placeholder(defaultName).
-					Value(&rootName),
-			),
-		).Run(); err != nil {
+		rootName, err := ui.RunInput(opts, ui.InputSpec{
+			Title:       "name for this root",
+			Placeholder: defaultName,
+		})
+		if errors.Is(err, ui.ErrAborted) {
+			return err
+		}
+		if err != nil {
 			return err
 		}
 		if rootName == "" {
@@ -164,14 +160,13 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 			cfg.Workspace.DefaultRoot = rootName
 		}
 
-		var addAnother bool
-		if err := ui.NewForm(
-			huh.NewGroup(
-				ui.NewConfirm().
-					Title("add another root?").
-					Value(&addAnother),
-			),
-		).Run(); err != nil {
+		addAnother, err := ui.RunConfirm(opts, ui.ConfirmSpec{
+			Title: "add another root?",
+		})
+		if errors.Is(err, ui.ErrAborted) {
+			return err
+		}
+		if err != nil {
 			return err
 		}
 		if !addAnother {
@@ -182,38 +177,34 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 }
 
 func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
-	var name, email, ghUser, profileName string
+	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
 
-	ui.Header(f.IO.ErrOut, "git identity")
-	if err := ui.NewForm(
-		huh.NewGroup(
-			huh.NewInput().
-				Title("full name").
-				Value(&name),
-			huh.NewInput().
-				Title("email").
-				Value(&email),
-			huh.NewInput().
-				Title("github username (optional)").
-				Value(&ghUser),
-			huh.NewInput().
-				Title("profile name").
-				Placeholder("personal").
-				Value(&profileName),
-		),
-	).Run(); err != nil {
+	result, err := ui.RunForm(opts, ui.FormSpec{
+		Title: "git identity",
+		Fields: []ui.InputField{
+			{Key: "name", Label: "full name"},
+			{Key: "email", Label: "email"},
+			{Key: "gh_user", Label: "github username (optional)"},
+			{Key: "profile", Label: "profile name", Placeholder: "personal"},
+		},
+	})
+	if errors.Is(err, ui.ErrAborted) {
+		return "", err
+	}
+	if err != nil {
 		return "", err
 	}
 
+	profileName := result["profile"]
 	if profileName == "" {
 		profileName = "personal"
 	}
 
 	cfg.Git.Profiles = append(cfg.Git.Profiles, config.Profile{
 		Name:     profileName,
-		Username: name,
-		Email:    email,
-		GHUser:   ghUser,
+		Username: result["name"],
+		Email:    result["email"],
+		GHUser:   result["gh_user"],
 	})
 	cfg.Git.DefaultProfile = profileName
 
@@ -221,15 +212,16 @@ func setupGitIdentity(f *factory.Factory, cfg *config.Config) (string, error) {
 }
 
 func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) error {
+	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+
 	for _, root := range cfg.Workspace.Roots {
-		var mapIt bool
-		if err := ui.NewForm(
-			huh.NewGroup(
-				ui.NewConfirm().
-					Title(fmt.Sprintf("map %q to the %q profile?", root.Path, profileName)).
-					Value(&mapIt),
-			),
-		).Run(); err != nil {
+		mapIt, err := ui.RunConfirm(opts, ui.ConfirmSpec{
+			Title: fmt.Sprintf("map %q to the %q profile?", root.Path, profileName),
+		})
+		if errors.Is(err, ui.ErrAborted) {
+			return err
+		}
+		if err != nil {
 			return err
 		}
 		if mapIt {
@@ -243,16 +235,16 @@ func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) e
 }
 
 func setupAIKey(f *factory.Factory, cfg *config.Config) error {
-	var apiKey string
-	ui.Header(f.IO.ErrOut, "ai setup")
-	if err := ui.NewForm(
-		huh.NewGroup(
-			huh.NewInput().
-				Title("ai api key (optional, leave blank to skip)").
-				EchoMode(huh.EchoModePassword).
-				Value(&apiKey),
-		),
-	).Run(); err != nil {
+	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+
+	apiKey, err := ui.RunInput(opts, ui.InputSpec{
+		Title:    "ai api key (optional, leave blank to skip)",
+		Password: true,
+	})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
 		return err
 	}
 	cfg.AI.APIKey = apiKey
