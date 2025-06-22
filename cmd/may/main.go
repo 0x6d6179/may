@@ -7,14 +7,14 @@ import (
 
 	"github.com/0x6d6179/may/internal/cmd/root"
 	"github.com/0x6d6179/may/internal/factory"
-	"github.com/charmbracelet/huh"
+	"github.com/0x6d6179/may/internal/ui"
 )
 
 func main() {
 	f := factory.New()
 	cmd := root.NewCmdRoot(f)
 	if err := cmd.Execute(); err != nil {
-		if errors.Is(err, huh.ErrUserAborted) {
+		if errors.Is(err, ui.ErrAborted) {
 			fmt.Fprintln(f.IO.ErrOut, "→  command aborted")
 			os.Exit(0)
 		}
