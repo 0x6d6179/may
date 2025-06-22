@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/ui"
-	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
 
@@ -52,17 +52,14 @@ func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
 				}
 			}
 
-			ui.Header(f.IO.ErrOut, "shell install")
-
-			var confirm bool
-			if err := ui.NewForm(
-				huh.NewGroup(
-					ui.NewConfirm().
-						Title(fmt.Sprintf("add to %s?", profile)).
-						Description(line).
-						Value(&confirm),
-				),
-			).Run(); err != nil {
+			opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+			confirm, err := ui.RunConfirm(opts, ui.ConfirmSpec{
+				Title: fmt.Sprintf("add to %s?", profile),
+			})
+			if errors.Is(err, ui.ErrAborted) {
+				return nil
+			}
+			if err != nil {
 				return err
 			}
 

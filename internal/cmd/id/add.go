@@ -7,7 +7,6 @@ import (
 	"github.com/0x6d6179/may/internal/config"
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/ui"
-	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
 
@@ -27,42 +26,35 @@ func NewCmdIdAdd(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			var name, username, email, ghUser string
-
-			form := ui.NewForm(
-				huh.NewGroup(
-					huh.NewInput().
-						Title("profile name").
-						Value(&name),
-					huh.NewInput().
-						Title("git username").
-						Value(&username),
-					huh.NewInput().
-						Title("git email").
-						Value(&email),
-					huh.NewInput().
-						Title("github username").
-						Value(&ghUser),
-				),
-			)
-
-			ui.Header(f.IO.ErrOut, "add identity")
-			if err := form.Run(); err != nil {
+			opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+			result, err := ui.RunForm(opts, ui.FormSpec{
+				Title: "add identity",
+				Fields: []ui.InputField{
+					{Key: "name", Label: "profile name"},
+					{Key: "username", Label: "git username"},
+					{Key: "email", Label: "git email"},
+					{Key: "gh_user", Label: "github username"},
+				},
+			})
+			if errors.Is(err, ui.ErrAborted) {
+				return nil
+			}
+			if err != nil {
 				return err
 			}
 
 			cfg.Git.Profiles = append(cfg.Git.Profiles, config.Profile{
-				Name:     name,
-				Username: username,
-				Email:    email,
-				GHUser:   ghUser,
+				Name:     result["name"],
+				Username: result["username"],
+				Email:    result["email"],
+				GHUser:   result["gh_user"],
 			})
 
 			if err := config.Save(cfg); err != nil {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ added profile: %s\n", name)
+			fmt.Fprintf(f.IO.ErrOut, "✓ added profile: %s\n", result["name"])
 			return nil
 		},
 	}
