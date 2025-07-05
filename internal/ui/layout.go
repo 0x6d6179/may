@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
 )
 
@@ -33,12 +32,7 @@ func TermWidth() int {
 func RenderFrame(title string, content string, hints []Hint, width int) string {
 	var b strings.Builder
 
-	titleText := title + " "
-	fill := width - lipgloss.Width(titleText)
-	if fill < 1 {
-		fill = 1
-	}
-	b.WriteString(StyleTitle.Render(titleText + strings.Repeat("─", fill)))
+	b.WriteString(StyleTitle.Render(title))
 	b.WriteString("\n\n")
 
 	b.WriteString(content)
