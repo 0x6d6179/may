@@ -27,7 +27,8 @@ func profileFile(shell string) string {
 }
 
 func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
-	return &cobra.Command{
+	var dev bool
+	cmd := &cobra.Command{
 		Use:   "install [bash|zsh|fish]",
 		Short: "add shell integration to your profile",
 		Args:  cobra.MaximumNArgs(1),
@@ -42,19 +43,39 @@ func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
 				return fmt.Errorf("unsupported shell: %s", shell)
 			}
 
-			line := fmt.Sprintf(`eval "$(may shell init %s)"`, shell)
+			var lines []string
+			if dev {
+				cwd, err := os.Getwd()
+				if err != nil {
+					return fmt.Errorf("get working directory: %w", err)
+				}
+				switch shell {
+				case "fish":
+					lines = append(lines, fmt.Sprintf("set -gx PATH %s $PATH", cwd))
+				default:
+					lines = append(lines, fmt.Sprintf("export PATH=%q:$PATH", cwd))
+				}
+			}
+			lines = append(lines, fmt.Sprintf(`eval "$(may shell init %s)"`, shell))
+			
+			block := strings.Join(lines, "\n")
 
 			// Check if already present
 			if data, err := os.ReadFile(profile); err == nil {
-				if strings.Contains(string(data), line) {
+				if strings.Contains(string(data), fmt.Sprintf(`eval "$(may shell init %s)"`, shell)) {
 					fmt.Fprintf(f.IO.ErrOut, "✓ already configured in %s\n", profile)
 					return nil
 				}
 			}
 
+			title := fmt.Sprintf("add to %s?", profile)
+			if dev {
+				title = fmt.Sprintf("add dev PATH + init to %s?", profile)
+			}
+
 			opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
 			confirm, err := ui.RunConfirm(opts, ui.ConfirmSpec{
-				Title: fmt.Sprintf("add to %s?", profile),
+				Title: title,
 			})
 			if errors.Is(err, ui.ErrAborted) {
 				return nil
@@ -73,7 +94,7 @@ func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
 			}
 			defer file.Close()
 
-			if _, err2 := fmt.Fprintf(file, "\n%s\n", line); err2 != nil {
+			if _, err2 := fmt.Fprintf(file, "\n%s\n", block); err2 != nil {
 				return fmt.Errorf("write %s: %w", profile, err2)
 			}
 
@@ -82,4 +103,6 @@ func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&dev, "dev", false, "prepend cwd to PATH for development")
+	return cmd
 }
