@@ -8,9 +8,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/0x6d6179/may/internal/config"
 )
 
-// chatResponseBody mirrors the shape returned by the OpenAI-compatible endpoint.
 type chatResponseBody struct {
 	Choices []struct {
 		Message struct {
@@ -40,6 +41,21 @@ func buildChatResponse(primary, alt1, alt2, alt3 string) []byte {
 	return data
 }
 
+func newTestClient(baseURL, apiKey, model string, httpClient *http.Client) *Client {
+	provider := NewOpenRouterClient(baseURL, apiKey)
+	provider.httpClient = httpClient
+	return &Client{provider: provider, model: model}
+}
+
+func newTestClientFromConfig(baseURL, apiKey, model string, httpClient *http.Client) *Client {
+	cfg := &config.AIConfig{BaseURL: baseURL, APIKey: apiKey, Model: model}
+	c := NewClientFromConfig(cfg)
+	if or, ok := c.provider.(*OpenRouterClient); ok {
+		or.httpClient = httpClient
+	}
+	return c
+}
+
 func TestGenerateCommitMessages_ParseResponse(t *testing.T) {
 	wantPrimary := "feat(auth): add JWT login"
 	wantAlt1 := "feat(auth): implement JWT authentication"
@@ -53,12 +69,7 @@ func TestGenerateCommitMessages_ParseResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := &Client{
-		BaseURL:    srv.URL,
-		APIKey:     "test-key",
-		Model:      "test-model",
-		HTTPClient: srv.Client(),
-	}
+	client := newTestClient(srv.URL, "test-key", "test-model", srv.Client())
 
 	ctx := context.Background()
 	msgs, err := client.GenerateCommitMessages(ctx, "diff --git a/main.go")
@@ -88,12 +99,7 @@ func TestGenerateCommitMessages_HTTPError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := &Client{
-		BaseURL:    srv.URL,
-		APIKey:     "test-key",
-		Model:      "test-model",
-		HTTPClient: srv.Client(),
-	}
+	client := newTestClient(srv.URL, "test-key", "test-model", srv.Client())
 
 	ctx := context.Background()
 	_, err := client.GenerateCommitMessages(ctx, "some diff")
@@ -101,7 +107,6 @@ func TestGenerateCommitMessages_HTTPError(t *testing.T) {
 		t.Fatal("GenerateCommitMessages with 500: expected error, got nil")
 	}
 
-	// Should have been called twice (initial + 1 retry)
 	if callCount != 2 {
 		t.Errorf("server called %d times; want 2", callCount)
 	}
@@ -114,12 +119,7 @@ func TestGenerateCommitMessages_Timeout(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := &Client{
-		BaseURL:    srv.URL,
-		APIKey:     "test-key",
-		Model:      "test-model",
-		HTTPClient: srv.Client(),
-	}
+	client := newTestClient(srv.URL, "test-key", "test-model", srv.Client())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -139,17 +139,11 @@ func TestGenerateCommitMessages_EmptyChoices(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		// Return valid JSON but with empty choices
 		w.Write([]byte(`{"choices":[]}`))
 	}))
 	defer srv.Close()
 
-	client := &Client{
-		BaseURL:    srv.URL,
-		APIKey:     "test-key",
-		Model:      "test-model",
-		HTTPClient: srv.Client(),
-	}
+	client := newTestClient(srv.URL, "test-key", "test-model", srv.Client())
 
 	ctx := context.Background()
 	_, err := client.GenerateCommitMessages(ctx, "diff")
@@ -162,17 +156,11 @@ func TestGenerateCommitMessages_MalformedPayload(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		// choices[0].message.content is not valid JSON
 		w.Write([]byte(`{"choices":[{"message":{"content":"not-json"}}]}`))
 	}))
 	defer srv.Close()
 
-	client := &Client{
-		BaseURL:    srv.URL,
-		APIKey:     "test-key",
-		Model:      "test-model",
-		HTTPClient: srv.Client(),
-	}
+	client := newTestClient(srv.URL, "test-key", "test-model", srv.Client())
 
 	ctx := context.Background()
 	_, err := client.GenerateCommitMessages(ctx, "diff")
