@@ -11,6 +11,11 @@ type asyncFinishedMsg struct {
 	Err   error
 }
 
+type OptionUpdateMsg struct {
+	Index       int
+	Description string
+}
+
 func completeCmd(v any) tea.Cmd {
 	return func() tea.Msg { return stepCompleteMsg{Value: v} }
 }

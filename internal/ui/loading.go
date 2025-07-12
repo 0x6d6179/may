@@ -6,9 +6,10 @@ import (
 )
 
 type LoadingSpec[T any] struct {
-	Title string
-	Label string
-	Task  func() (T, error)
+	Title         string
+	Label         string
+	Task          func() (T, error)
+	CustomSpinner *spinner.Spinner
 }
 
 type LoadingModel[T any] struct {
@@ -23,7 +24,11 @@ type LoadingModel[T any] struct {
 
 func NewLoading[T any](spec LoadingSpec[T]) *LoadingModel[T] {
 	s := spinner.New()
-	s.Spinner = spinner.Dot
+	if spec.CustomSpinner != nil {
+		s.Spinner = *spec.CustomSpinner
+	} else {
+		s.Spinner = spinner.MiniDot
+	}
 
 	return &LoadingModel[T]{
 		title:   spec.Title,
@@ -33,7 +38,7 @@ func NewLoading[T any](spec LoadingSpec[T]) *LoadingModel[T] {
 	}
 }
 
-func (m *LoadingModel[T]) Title() string { return m.title }
+func (m *LoadingModel[T]) Title() string { return "" }
 
 func (m *LoadingModel[T]) FooterHints() []Hint {
 	return nil
@@ -73,5 +78,5 @@ func (m *LoadingModel[T]) View() string {
 	if m.done {
 		return ""
 	}
-	return m.spinner.View() + " " + m.label
+	return m.spinner.View() + " " + StyleTitle.Render(m.title) + " " + m.label
 }

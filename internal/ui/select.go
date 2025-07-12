@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -12,6 +13,7 @@ type SelectSpec[T comparable] struct {
 	Title   string
 	Options []Option[T]
 	Height  int
+	InitCmd tea.Cmd
 }
 
 type SelectModel[T comparable] struct {
@@ -25,6 +27,8 @@ type SelectModel[T comparable] struct {
 	filter     textinput.Model
 	width      int
 	selected   bool
+	spinner    spinner.Model
+	initCmd    tea.Cmd
 }
 
 func newSelect[T comparable](spec SelectSpec[T]) *SelectModel[T] {
@@ -38,6 +42,10 @@ func newSelect[T comparable](spec SelectSpec[T]) *SelectModel[T] {
 	ti.PromptStyle = StyleHint
 	ti.TextStyle = lipgloss.NewStyle().Foreground(lavender)
 
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = StyleHint
+
 	indices := make([]int, len(spec.Options))
 	for i := range spec.Options {
 		indices[i] = i
@@ -49,6 +57,8 @@ func newSelect[T comparable](spec SelectSpec[T]) *SelectModel[T] {
 		filtered:   indices,
 		maxVisible: height,
 		filter:     ti,
+		spinner:    s,
+		initCmd:    spec.InitCmd,
 	}
 }
 
@@ -75,11 +85,21 @@ func (m *SelectModel[T]) SetSize(width, _ int) {
 }
 
 func (m *SelectModel[T]) Init() tea.Cmd {
-	return nil
+	return tea.Batch(m.initCmd, m.spinner.Tick)
 }
 
 func (m *SelectModel[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case OptionUpdateMsg:
+		if msg.Index >= 0 && msg.Index < len(m.options) {
+			m.options[msg.Index].Description = msg.Description
+			m.options[msg.Index].Loading = false
+		}
+		return m, nil
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	case tea.KeyMsg:
 		switch {
 		case m.filtering:
@@ -206,9 +226,15 @@ func (m *SelectModel[T]) View() string {
 			b.WriteString(opt.Label)
 		}
 
-		if opt.Description != "" {
-			b.WriteString(" ")
-			b.WriteString(StyleDescription.Render(opt.Description))
+		if opt.Description != "" || opt.Loading {
+			b.WriteString(StyleHint.Render(" · "))
+			var desc strings.Builder
+			if opt.Loading {
+				desc.WriteString(m.spinner.View())
+				desc.WriteString(" ")
+			}
+			desc.WriteString(opt.Description)
+			b.WriteString(StyleDescription.Render(desc.String()))
 		}
 
 		if i < len(visible)-1 {

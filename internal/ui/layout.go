@@ -32,8 +32,10 @@ func TermWidth() int {
 func RenderFrame(title string, content string, hints []Hint, width int) string {
 	var b strings.Builder
 
-	b.WriteString(StyleTitle.Render(title))
-	b.WriteString("\n\n")
+	if title != "" {
+		b.WriteString(StyleTitle.Render(title))
+		b.WriteString("\n\n")
+	}
 
 	b.WriteString(content)
 	b.WriteString("\n\n")

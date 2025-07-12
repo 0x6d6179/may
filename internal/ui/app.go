@@ -3,8 +3,11 @@ package ui
 import (
 	"fmt"
 	"io"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 type Step interface {
@@ -25,11 +28,11 @@ type RunOptions struct {
 }
 
 type App struct {
-	flow    Flow
-	step    Step
-	result  any
-	err     error
-	width   int
+	flow     Flow
+	step     Step
+	result   any
+	err      error
+	width    int
 	quitting bool
 }
 
@@ -114,6 +117,9 @@ func RunFlow[T any](flow Flow, opts RunOptions) (T, error) {
 	var progOpts []tea.ProgramOption
 	if opts.Out != nil {
 		progOpts = append(progOpts, tea.WithOutput(opts.Out))
+		if f, ok := opts.Out.(*os.File); ok {
+			lipgloss.SetColorProfile(termenv.NewOutput(f).ColorProfile())
+		}
 	}
 	if opts.In != nil {
 		progOpts = append(progOpts, tea.WithInput(opts.In))
