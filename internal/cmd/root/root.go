@@ -1,10 +1,11 @@
 package root
 
 import (
-	"github.com/0x6d6179/may/internal/cmd/commit"
+	"github.com/0x6d6179/may/internal/cmd/ai"
 	"github.com/0x6d6179/may/internal/cmd/completion"
 	"github.com/0x6d6179/may/internal/cmd/id"
 	initcmd "github.com/0x6d6179/may/internal/cmd/init"
+	"github.com/0x6d6179/may/internal/cmd/j"
 	"github.com/0x6d6179/may/internal/cmd/shell"
 	"github.com/0x6d6179/may/internal/cmd/update"
 	"github.com/0x6d6179/may/internal/cmd/ws"
@@ -26,7 +27,8 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 
 	cmd.AddCommand(ws.NewCmdWs(f))
 	cmd.AddCommand(wt.NewCmdWt(f))
-	cmd.AddCommand(commit.NewCmdCommit(f))
+	cmd.AddCommand(ai.NewCmdAi(f))
+	cmd.AddCommand(j.NewCmdJ(f))
 	cmd.AddCommand(id.NewCmdId(f))
 	cmd.AddCommand(shell.NewCmdShell(f, cmd))
 	cmd.AddCommand(update.NewCmdUpdate(f))

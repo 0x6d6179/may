@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/0x6d6179/may/internal/config"
 )
@@ -26,6 +27,9 @@ func List(cfg *config.Config) []Workspace {
 		}
 		for _, e := range entries {
 			if !e.IsDir() {
+				continue
+			}
+			if strings.HasPrefix(e.Name(), ".") {
 				continue
 			}
 			workspaces = append(workspaces, Workspace{

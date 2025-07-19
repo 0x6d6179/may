@@ -15,6 +15,7 @@ type Config struct {
 	Workspace WorkspaceConfig `yaml:"workspace"`
 	Git       GitConfig       `yaml:"git"`
 	AI        AIConfig        `yaml:"ai"`
+	Aliases   []Alias         `yaml:"aliases,omitempty"`
 }
 
 // WorkspaceConfig holds workspace root definitions.
@@ -50,11 +51,17 @@ type Mapping struct {
 	Profile string `yaml:"profile"`
 }
 
-// AIConfig holds settings for the AI commit message backend.
+// AIConfig holds settings for the AI backend.
 type AIConfig struct {
-	BaseURL string `yaml:"base_url"`
-	APIKey  string `yaml:"api_key"`
-	Model   string `yaml:"model"`
+	Provider string `yaml:"provider"`
+	BaseURL  string `yaml:"base_url,omitempty"`
+	APIKey   string `yaml:"api_key"`
+	Model    string `yaml:"model"`
+}
+
+type Alias struct {
+	Name    string `yaml:"name"`
+	Command string `yaml:"command"`
 }
 
 // Load reads the config from disk, applies env overrides, and expands tilde paths.
