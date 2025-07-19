@@ -16,6 +16,7 @@ func NewCmdShell(f *factory.Factory, rootCmd *cobra.Command) *cobra.Command {
 	cmd.AddCommand(NewCmdShellCompletion(f, rootCmd))
 	cmd.AddCommand(NewCmdShellAlias(f))
 	cmd.AddCommand(NewCmdShellInstall(f))
+	cmd.AddCommand(NewCmdShellConfigure(f))
 
 	return cmd
 }

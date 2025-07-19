@@ -8,81 +8,69 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const zshShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
-  export _MAY_SHELL_INIT=1
+const zshShim = `
+function may() {
+  local _may_out
+  _may_out=$(\command may "$@")
+  if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
+    \builtin cd -- "$_may_out"
+  elif [[ -n "$_may_out" ]]; then
+    printf '%s\n' "$_may_out"
+  fi
+}
 
-  function ws() {
-    local _may_out
-    _may_out=$(may ws "$@")
-    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
-      builtin cd "$_may_out"
-    fi
-  }
+function ws() { may ws "$@"; }
+function wt() { may wt "$@"; }
 
-  function wt() {
-    local _may_out
-    _may_out=$(may wt "$@")
-    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
-      builtin cd "$_may_out"
-    fi
-  }
+autoload -Uz add-zsh-hook
+function _may_id_hook() { \command may id status --apply --quiet }
+chpwd_functions=("${(@)chpwd_functions:#_may_id_hook}")
+chpwd_functions+=(_may_id_hook)
 
-  autoload -Uz add-zsh-hook
-  function _may_id_hook() { may id status --apply --quiet }
-  add-zsh-hook chpwd _may_id_hook
-
-  eval "$(may shell completion zsh)"
-fi
+eval "$(\command may shell completion zsh)"
 `
 
-const bashShim = `if [[ -z "$_MAY_SHELL_INIT" ]]; then
-  export _MAY_SHELL_INIT=1
+const bashShim = `
+function may() {
+  local _may_out
+  _may_out=$(\command may "$@")
+  if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
+    \builtin cd -- "$_may_out"
+  elif [[ -n "$_may_out" ]]; then
+    printf '%s\n' "$_may_out"
+  fi
+}
 
-  function ws() {
-    local _may_out
-    _may_out=$(may ws "$@")
-    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
-      builtin cd "$_may_out"
-    fi
-  }
+function ws() { may ws "$@"; }
+function wt() { may wt "$@"; }
 
-  function wt() {
-    local _may_out
-    _may_out=$(may wt "$@")
-    if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
-      builtin cd "$_may_out"
-    fi
-  }
-
-  PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}may id status --apply --quiet"
-
-  eval "$(may shell completion bash)"
+if [[ ${PROMPT_COMMAND:-} != *'_may_id_hook'* ]]; then
+  function _may_id_hook() { \command may id status --apply --quiet; }
+  PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND}; }_may_id_hook"
 fi
+
+eval "$(\command may shell completion bash)"
 `
 
-const fishShim = `if not set -q _MAY_SHELL_INIT
-  set -gx _MAY_SHELL_INIT 1
-
-  function ws
-    set _may_out (may ws $argv)
-    if test -n "$_may_out" -a -d "$_may_out"
-      builtin cd "$_may_out"
-    end
+const fishShim = `
+function may
+  set _may_out (\command may $argv)
+  if test -n "$_may_out" -a -d "$_may_out"
+    builtin cd "$_may_out"
+  else if test -n "$_may_out"
+    printf '%s\n' "$_may_out"
   end
-
-  function wt
-    set _may_out (may wt $argv)
-    if test -n "$_may_out" -a -d "$_may_out"
-      builtin cd "$_may_out"
-    end
-  end
-
-  function --on-variable PWD _may_id_hook
-    may id status --apply --quiet
-  end
-
-  may shell completion fish | source
 end
+
+function ws; may ws $argv; end
+function wt; may wt $argv; end
+
+functions --erase _may_id_hook 2>/dev/null
+function --on-variable PWD _may_id_hook
+  \command may id status --apply --quiet
+end
+
+\command may shell completion fish | source
 `
 
 func NewCmdShellInit(f *factory.Factory) *cobra.Command {
