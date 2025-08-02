@@ -51,7 +51,17 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 				}
 			}
 
-			snippet := buildSnippet(shell, features, devPath)
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
+
+			var aliases []aliasEntry
+			for _, a := range cfg.Aliases {
+				aliases = append(aliases, aliasEntry{Name: a.Name, Command: a.Command})
+			}
+
+			snippet := buildSnippet(shell, features, devPath, aliases...)
 			featuresLabel := strings.Join(features, ",")
 
 			action := "add to"

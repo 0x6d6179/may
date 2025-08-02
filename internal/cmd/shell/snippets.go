@@ -16,7 +16,12 @@ const (
 	featureDev        = "dev"
 )
 
-func buildSnippet(shell string, features []string, devPath string) string {
+type aliasEntry struct {
+	Name    string
+	Command string
+}
+
+func buildSnippet(shell string, features []string, devPath string, aliases ...aliasEntry) string {
 	set := make(map[string]bool, len(features))
 	for _, f := range features {
 		set[f] = true
@@ -61,6 +66,10 @@ func buildSnippet(shell string, features []string, devPath string) string {
 	if set[featureCore] {
 		b.WriteString(idHookSnippet(shell))
 		b.WriteString("\n\n")
+	}
+	for _, a := range aliases {
+		b.WriteString(userAliasSnippet(shell, a.Name, a.Command))
+		b.WriteString("\n")
 	}
 	if set[featureCompletion] {
 		b.WriteString(completionSnippet(shell))
@@ -127,6 +136,15 @@ func jSnippet(shell string) string {
 		return "function j; may j $argv; end"
 	default:
 		return "function j() { may j \"$@\"; }"
+	}
+}
+
+func userAliasSnippet(shell, name, command string) string {
+	switch shell {
+	case "fish":
+		return fmt.Sprintf("function %s; may %s $argv; end", name, command)
+	default:
+		return fmt.Sprintf("function %s() { may %s \"$@\"; }", name, command)
 	}
 }
 
