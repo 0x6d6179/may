@@ -12,6 +12,7 @@ const (
 	featureAI         = "ai"
 	featureAIFix      = "aifix"
 	featureJ          = "j"
+	featureSSHM       = "sshm"
 	featureCompletion = "completion"
 	featureDev        = "dev"
 )
@@ -57,6 +58,12 @@ func buildSnippet(shell string, features []string, devPath string, aliases ...al
 	}
 	if set[featureJ] {
 		b.WriteString(jSnippet(shell))
+		b.WriteString("\n")
+		b.WriteString(kSnippet(shell))
+		b.WriteString("\n")
+	}
+	if set[featureSSHM] {
+		b.WriteString(sshmSnippet(shell))
 		b.WriteString("\n")
 	}
 	if set[featureAIFix] {
@@ -139,12 +146,30 @@ func jSnippet(shell string) string {
 	}
 }
 
+func kSnippet(shell string) string {
+	switch shell {
+	case "fish":
+		return "function k; prevd; end"
+	default:
+		return "function k() { \\builtin cd - ; }"
+	}
+}
+
 func userAliasSnippet(shell, name, command string) string {
 	switch shell {
 	case "fish":
 		return fmt.Sprintf("function %s; may %s $argv; end", name, command)
 	default:
 		return fmt.Sprintf("function %s() { may %s \"$@\"; }", name, command)
+	}
+}
+
+func sshmSnippet(shell string) string {
+	switch shell {
+	case "fish":
+		return "function sshm; may sshm $argv; end"
+	default:
+		return "function sshm() { may sshm \"$@\"; }"
 	}
 }
 

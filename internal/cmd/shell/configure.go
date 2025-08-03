@@ -105,6 +105,7 @@ func selectFeatures(opts ui.RunOptions, dev bool) ([]string, error) {
 		{Label: "ai alias", Description: "ai assistant shortcut", Value: featureAI},
 		{Label: "ai fix", Description: "auto-suggest fix on command error", Value: featureAIFix},
 		{Label: "j alias", Description: "smart directory jump with fuzzy matching", Value: featureJ},
+		{Label: "sshm alias", Description: "ssh connection manager shortcut", Value: featureSSHM},
 		{Label: "completion", Description: "shell tab completion", Value: featureCompletion},
 	}
 

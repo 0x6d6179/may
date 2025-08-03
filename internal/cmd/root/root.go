@@ -22,6 +22,7 @@ import (
 	"github.com/0x6d6179/may/internal/cmd/run"
 	"github.com/0x6d6179/may/internal/cmd/secret"
 	"github.com/0x6d6179/may/internal/cmd/shell"
+	"github.com/0x6d6179/may/internal/cmd/sshm"
 	"github.com/0x6d6179/may/internal/cmd/stash"
 	"github.com/0x6d6179/may/internal/cmd/todo"
 	"github.com/0x6d6179/may/internal/cmd/update"
@@ -44,46 +45,57 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 
 	cmd.Version = version.Version
 
+	cmd.AddGroup(
+		&cobra.Group{ID: "nav", Title: "workspace & navigation"},
+		&cobra.Group{ID: "ai", Title: "ai"},
+		&cobra.Group{ID: "git", Title: "git utilities"},
+		&cobra.Group{ID: "project", Title: "project tools"},
+		&cobra.Group{ID: "system", Title: "system & path"},
+		&cobra.Group{ID: "encode", Title: "encode / decode"},
+		&cobra.Group{ID: "meta", Title: "identity & meta"},
+	)
+
 	// workspace & navigation
-	cmd.AddCommand(ws.NewCmdWs(f))
-	cmd.AddCommand(wt.NewCmdWt(f))
-	cmd.AddCommand(j.NewCmdJ(f))
-	cmd.AddCommand(branch.NewCmdBranch(f))
-	cmd.AddCommand(recent.NewCmdRecent(f))
-	cmd.AddCommand(open.NewCmdOpen(f))
+	addCmd(cmd, "nav", ws.NewCmdWs(f))
+	addCmd(cmd, "nav", wt.NewCmdWt(f))
+	addCmd(cmd, "nav", j.NewCmdJ(f))
+	addCmd(cmd, "nav", branch.NewCmdBranch(f))
+	addCmd(cmd, "nav", recent.NewCmdRecent(f))
+	addCmd(cmd, "nav", open.NewCmdOpen(f))
 
 	// ai
-	cmd.AddCommand(ai.NewCmdAi(f))
+	addCmd(cmd, "ai", ai.NewCmdAi(f))
 
 	// git utilities
-	cmd.AddCommand(stash.NewCmdStash(f))
-	cmd.AddCommand(todo.NewCmdTodo(f))
-	cmd.AddCommand(env.NewCmdEnv(f))
+	addCmd(cmd, "git", stash.NewCmdStash(f))
+	addCmd(cmd, "git", todo.NewCmdTodo(f))
+	addCmd(cmd, "git", env.NewCmdEnv(f))
 
 	// project tools
-	cmd.AddCommand(run.NewCmdRun(f))
-	cmd.AddCommand(port.NewCmdPort(f))
-	cmd.AddCommand(db.NewCmdDb(f))
+	addCmd(cmd, "project", run.NewCmdRun(f))
+	addCmd(cmd, "project", port.NewCmdPort(f))
+	addCmd(cmd, "project", db.NewCmdDb(f))
 
 	// system & path
-	cmd.AddCommand(pathcmd.NewCmdPath(f))
-	cmd.AddCommand(ip.NewCmdIp(f))
-	cmd.AddCommand(dotfiles.NewCmdDotfiles(f))
-	cmd.AddCommand(weather.NewCmdWeather(f))
+	addCmd(cmd, "system", pathcmd.NewCmdPath(f))
+	addCmd(cmd, "system", ip.NewCmdIp(f))
+	addCmd(cmd, "system", dotfiles.NewCmdDotfiles(f))
+	addCmd(cmd, "system", weather.NewCmdWeather(f))
 
 	// encode / decode
-	cmd.AddCommand(b64.NewCmdB64(f))
-	cmd.AddCommand(uuid.NewCmdUuid(f))
-	cmd.AddCommand(hash.NewCmdHash(f))
-	cmd.AddCommand(jwt.NewCmdJwt(f))
-	cmd.AddCommand(secret.NewCmdSecret(f))
+	addCmd(cmd, "encode", b64.NewCmdB64(f))
+	addCmd(cmd, "encode", uuid.NewCmdUuid(f))
+	addCmd(cmd, "encode", hash.NewCmdHash(f))
+	addCmd(cmd, "encode", jwt.NewCmdJwt(f))
+	addCmd(cmd, "encode", secret.NewCmdSecret(f))
 
 	// identity & meta
-	cmd.AddCommand(id.NewCmdId(f))
-	cmd.AddCommand(alias.NewCmdAlias(f))
-	cmd.AddCommand(shell.NewCmdShell(f, cmd))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(initcmd.NewCmdInit(f))
+	addCmd(cmd, "meta", id.NewCmdId(f))
+	addCmd(cmd, "meta", sshm.NewCmdSshm(f))
+	addCmd(cmd, "meta", alias.NewCmdAlias(f))
+	addCmd(cmd, "meta", shell.NewCmdShell(f, cmd))
+	addCmd(cmd, "meta", update.NewCmdUpdate(f))
+	addCmd(cmd, "meta", initcmd.NewCmdInit(f))
 
 	completionCmd := completion.NewCmdCompletion(f, cmd)
 	completionCmd.Hidden = true
@@ -97,4 +109,9 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func addCmd(parent *cobra.Command, groupID string, child *cobra.Command) {
+	child.GroupID = groupID
+	parent.AddCommand(child)
 }
