@@ -1,10 +1,13 @@
 package root
 
 import (
+	"fmt"
+
 	"github.com/0x6d6179/may/internal/cmd/ai"
 	"github.com/0x6d6179/may/internal/cmd/alias"
 	"github.com/0x6d6179/may/internal/cmd/b64"
 	"github.com/0x6d6179/may/internal/cmd/branch"
+	"github.com/0x6d6179/may/internal/cmd/commands"
 	"github.com/0x6d6179/may/internal/cmd/completion"
 	"github.com/0x6d6179/may/internal/cmd/db"
 	"github.com/0x6d6179/may/internal/cmd/dotfiles"
@@ -93,6 +96,7 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	addCmd(cmd, "meta", id.NewCmdId(f))
 	addCmd(cmd, "meta", sshm.NewCmdSshm(f))
 	addCmd(cmd, "meta", alias.NewCmdAlias(f))
+	addCmd(cmd, "meta", commands.NewCmdCommands(f))
 	addCmd(cmd, "meta", shell.NewCmdShell(f, cmd))
 	addCmd(cmd, "meta", update.NewCmdUpdate(f))
 	addCmd(cmd, "meta", initcmd.NewCmdInit(f))
@@ -108,10 +112,40 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 		}
 	}
 
+	applyDisabledCommands(cmd, f)
+
 	return cmd
 }
 
 func addCmd(parent *cobra.Command, groupID string, child *cobra.Command) {
 	child.GroupID = groupID
 	parent.AddCommand(child)
+}
+
+var neverDisable = map[string]bool{
+	"commands": true, "shell": true, "update": true, "init": true,
+	"help": true, "completion": true,
+}
+
+func applyDisabledCommands(root *cobra.Command, f *factory.Factory) {
+	cfg, err := f.Config()
+	if err != nil || len(cfg.DisabledCommands) == 0 {
+		return
+	}
+	disabled := make(map[string]bool, len(cfg.DisabledCommands))
+	for _, n := range cfg.DisabledCommands {
+		if !neverDisable[n] {
+			disabled[n] = true
+		}
+	}
+	for _, c := range root.Commands() {
+		if !disabled[c.Name()] {
+			continue
+		}
+		c.Hidden = true
+		name := c.Name()
+		c.RunE = func(_ *cobra.Command, _ []string) error {
+			return fmt.Errorf("%s is disabled — run: may commands configure", name)
+		}
+	}
 }

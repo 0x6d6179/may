@@ -17,12 +17,12 @@ const (
 	featureDev        = "dev"
 )
 
-type aliasEntry struct {
+type AliasEntry struct {
 	Name    string
 	Command string
 }
 
-func buildSnippet(shell string, features []string, devPath string, aliases ...aliasEntry) string {
+func BuildSnippet(shell string, features []string, devPath string, aliases ...AliasEntry) string {
 	set := make(map[string]bool, len(features))
 	for _, f := range features {
 		set[f] = true

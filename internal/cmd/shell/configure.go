@@ -23,7 +23,7 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			profile := profileFile(shell)
+			profile := ProfileFile(shell)
 			if profile == "" {
 				return fmt.Errorf("unsupported shell: %s", shell)
 			}
@@ -56,16 +56,16 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			var aliases []aliasEntry
+			var aliases []AliasEntry
 			for _, a := range cfg.Aliases {
-				aliases = append(aliases, aliasEntry{Name: a.Name, Command: a.Command})
+				aliases = append(aliases, AliasEntry{Name: a.Name, Command: a.Command})
 			}
 
-			snippet := buildSnippet(shell, features, devPath, aliases...)
+			snippet := BuildSnippet(shell, features, devPath, aliases...)
 			featuresLabel := strings.Join(features, ",")
 
 			action := "add to"
-			if hasBlock(profile) {
+			if HasBlock(profile) {
 				action = "update"
 			}
 
@@ -85,7 +85,7 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 				return nil
 			}
 
-			if err := writeBlock(profile, featuresLabel, snippet); err != nil {
+			if err := WriteBlock(profile, featuresLabel, snippet); err != nil {
 				return err
 			}
 

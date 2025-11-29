@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 )
 
-// detectShell returns the current shell from $SHELL, or an error if unknown.
-func detectShell() (string, error) {
+// DetectShell returns the current shell from $SHELL, or an error if unknown.
+func DetectShell() (string, error) {
 	shell := os.Getenv("SHELL")
 	switch filepath.Base(shell) {
 	case "zsh":
@@ -29,5 +29,5 @@ func resolveShell(args []string) (string, error) {
 	if len(args) > 0 {
 		return args[0], nil
 	}
-	return detectShell()
+	return DetectShell()
 }

@@ -11,7 +11,7 @@ const (
 	blockClose = "# <<< may <<<"
 )
 
-func hasBlock(path string) bool {
+func HasBlock(path string) bool {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return false
@@ -19,7 +19,7 @@ func hasBlock(path string) bool {
 	return strings.Contains(string(data), blockOpen)
 }
 
-func writeBlock(path, features, content string) error {
+func WriteBlock(path, features, content string) error {
 	_, err := os.ReadFile(path)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("read %s: %w", path, err)
@@ -31,7 +31,7 @@ func writeBlock(path, features, content string) error {
 		return os.WriteFile(path, []byte(block+"\n"), 0644)
 	}
 
-	if hasBlock(path) {
+	if HasBlock(path) {
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("read %s: %w", path, err)
@@ -48,6 +48,31 @@ func writeBlock(path, features, content string) error {
 
 	_, err = fmt.Fprintf(f, "\n%s\n", block)
 	return err
+}
+
+func ReadFeatures(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	const prefix = "# features: "
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(line, prefix) {
+			raw := strings.TrimPrefix(line, prefix)
+			parts := strings.Split(raw, ",")
+			features := make([]string, 0, len(parts))
+			for _, p := range parts {
+				if p = strings.TrimSpace(p); p != "" {
+					features = append(features, p)
+				}
+			}
+			return features, nil
+		}
+	}
+	return nil, nil
 }
 
 func removeBlock(path string) error {

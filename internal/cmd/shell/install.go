@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func profileFile(shell string) string {
+func ProfileFile(shell string) string {
 	home, _ := os.UserHomeDir()
 	switch shell {
 	case "zsh":
@@ -38,7 +38,7 @@ func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			profile := profileFile(shell)
+			profile := ProfileFile(shell)
 			if profile == "" {
 				return fmt.Errorf("unsupported shell: %s", shell)
 			}
@@ -57,7 +57,7 @@ func NewCmdShellInstall(f *factory.Factory) *cobra.Command {
 				}
 			}
 			lines = append(lines, fmt.Sprintf(`eval "$(may shell init %s)"`, shell))
-			
+
 			block := strings.Join(lines, "\n")
 
 			// Check if already present
