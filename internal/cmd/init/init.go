@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/0x6d6179/may/internal/cmd/shell"
 	"github.com/0x6d6179/may/internal/config"
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/0x6d6179/may/internal/ui"
@@ -24,51 +26,61 @@ func NewCmdInit(f *factory.Factory) *cobra.Command {
 	return cmd
 }
 
+type wizardState struct {
+	cfg         *config.Config
+	profileName string
+	aiProvider  string
+	shellName   string
+	shellFeats  []string
+	profilePath string
+	disableCmds []string
+	setupShell  bool
+	setupCmds   bool
+}
+
 func runInit(f *factory.Factory) error {
-	if !f.IO.IsTerminal() {
+	if !f.IO.IsErrTerminal() {
 		fmt.Fprintln(f.IO.ErrOut, "not a terminal")
 		return errors.New("not a terminal")
 	}
 
-	cfg := &config.Config{}
-	cfg.AI.BaseURL = "https://api.cerebras.ai/v1"
-	cfg.AI.Model = "llama-4-scout-17b-16e-instruct"
+	state := &wizardState{
+		cfg: &config.Config{},
+	}
 
 	detected := detectWorkspaceDirs()
 
-	if err := setupWorkspaceRoots(f, cfg, detected); err != nil {
-		return nil //nolint:nilerr // user cancelled
+	if err := setupWorkspaceRoots(f, state.cfg, detected); err != nil {
+		return nil
 	}
 
-	profile, err := setupGitIdentity(f, cfg)
+	profileName, err := setupGitIdentity(f, state.cfg)
 	if err != nil {
-		return nil //nolint:nilerr // user cancelled
+		return nil
+	}
+	state.profileName = profileName
+
+	if err := setupMappings(f, state.cfg, profileName); err != nil {
+		return nil
 	}
 
-	if err := setupMappings(f, cfg, profile); err != nil {
-		return nil //nolint:nilerr // user cancelled
+	if err := setupAI(f, state); err != nil {
+		return nil
 	}
 
-	if err := setupAIKey(f, cfg); err != nil {
-		return nil //nolint:nilerr // user cancelled
+	if err := setupShellIntegration(f, state); err != nil {
+		return nil
 	}
 
-	if err := config.Save(cfg); err != nil {
-		return fmt.Errorf("save config: %w", err)
+	if err := setupCommands(f, state); err != nil {
+		return nil
 	}
 
-	home, _ := os.UserHomeDir()
-	configFile := filepath.Join(home, ".config", "may", "config.yaml")
-	fmt.Fprintln(f.IO.ErrOut, "")
-	fmt.Fprintf(f.IO.ErrOut, "✓ config saved to %s\n", configFile)
-	fmt.Fprintln(f.IO.ErrOut, "")
-	fmt.Fprintln(f.IO.ErrOut, "to activate may in your shell, add this to your ~/.zprofile:")
-	fmt.Fprintln(f.IO.ErrOut, `  eval "$(may shell init zsh)"`)
-	fmt.Fprintln(f.IO.ErrOut, "")
-	fmt.Fprintln(f.IO.ErrOut, "then restart your shell or run:")
-	fmt.Fprintln(f.IO.ErrOut, "  source ~/.zprofile")
+	if err := reviewAndConfirm(f, state); err != nil {
+		return nil
+	}
 
-	return nil
+	return applyAndSave(f, state)
 }
 
 func detectWorkspaceDirs() []string {
@@ -234,12 +246,34 @@ func setupMappings(f *factory.Factory, cfg *config.Config, profileName string) e
 	return nil
 }
 
-func setupAIKey(f *factory.Factory, cfg *config.Config) error {
+var aiProviders = []ui.Option[string]{
+	{Label: "openrouter", Value: "openrouter"},
+	{Label: "cerebras", Value: "cerebras"},
+	{Label: "custom", Value: "custom"},
+}
+
+var providerDefaults = map[string]struct{ baseURL, model string }{
+	"openrouter": {"https://openrouter.ai/api/v1", "inception/mercury-2"},
+	"cerebras":   {"https://api.cerebras.ai/v1", "llama-4-scout-17b-16e-instruct"},
+}
+
+func setupAI(f *factory.Factory, state *wizardState) error {
 	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
 
-	apiKey, err := ui.RunInput(opts, ui.InputSpec{
-		Title:    "ai api key (optional, leave blank to skip)",
-		Password: true,
+	doSetup, err := ui.RunConfirm(opts, ui.ConfirmSpec{Title: "set up ai?", Default: true})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	if !doSetup {
+		return nil
+	}
+
+	provider, err := ui.RunSelect(opts, ui.SelectSpec[string]{
+		Title:   "ai provider",
+		Options: aiProviders,
 	})
 	if errors.Is(err, ui.ErrAborted) {
 		return err
@@ -247,6 +281,261 @@ func setupAIKey(f *factory.Factory, cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	cfg.AI.APIKey = apiKey
+	state.aiProvider = provider
+
+	var baseURL, defaultModel string
+	if defs, ok := providerDefaults[provider]; ok {
+		baseURL = defs.baseURL
+		defaultModel = defs.model
+	}
+
+	if provider == "custom" {
+		baseURL, err = ui.RunInput(opts, ui.InputSpec{Title: "base url"})
+		if errors.Is(err, ui.ErrAborted) {
+			return err
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	apiKey, err := ui.RunInput(opts, ui.InputSpec{Title: "ai api key", Password: true})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+
+	model, err := ui.RunInput(opts, ui.InputSpec{
+		Title:   "model (enter to keep default)",
+		Default: defaultModel,
+	})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	if model == "" {
+		model = defaultModel
+	}
+
+	state.cfg.AI.Provider = provider
+	state.cfg.AI.BaseURL = baseURL
+	state.cfg.AI.APIKey = apiKey
+	state.cfg.AI.Model = model
+
+	return nil
+}
+
+func setupShellIntegration(f *factory.Factory, state *wizardState) error {
+	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+
+	doSetup, err := ui.RunConfirm(opts, ui.ConfirmSpec{Title: "set up shell integration?", Default: true})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	if !doSetup {
+		return nil
+	}
+
+	shellName, err := shell.DetectShell()
+	if err != nil {
+		shellName, err = ui.RunSelect(opts, ui.SelectSpec[string]{
+			Title: "select shell",
+			Options: []ui.Option[string]{
+				{Label: "bash", Value: "bash"},
+				{Label: "zsh", Value: "zsh"},
+				{Label: "fish", Value: "fish"},
+			},
+		})
+		if errors.Is(err, ui.ErrAborted) {
+			return err
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	feats, err := shell.SelectFeatures(opts, false)
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+
+	feats = append([]string{"core"}, feats...)
+
+	state.setupShell = true
+	state.shellName = shellName
+	state.shellFeats = feats
+	state.profilePath = shell.ProfileFile(shellName)
+
+	return nil
+}
+
+var toggleableCommands = []struct{ Name, Short, Group string }{
+	{"ws", "workspace management", "nav"},
+	{"wt", "git worktree manager", "nav"},
+	{"j", "smart directory jump", "nav"},
+	{"branch", "list or switch git branches", "nav"},
+	{"recent", "show recently visited projects", "nav"},
+	{"open", "open repository in browser", "nav"},
+	{"ai", "ai assistant", "ai"},
+	{"stash", "manage git stashes", "git"},
+	{"todo", "find todo comments", "git"},
+	{"env", "manage .env files", "git"},
+	{"run", "run project scripts", "project"},
+	{"port", "show or kill processes on a port", "project"},
+	{"db", "connect to database from .env urls", "project"},
+	{"path", "inspect and debug path", "system"},
+	{"ip", "show local and public ip addresses", "system"},
+	{"dotfiles", "manage dotfile symlinks", "system"},
+	{"weather", "show weather forecast", "system"},
+	{"b64", "base64 encode/decode", "encode"},
+	{"uuid", "generate uuids", "encode"},
+	{"hash", "hash strings or files", "encode"},
+	{"jwt", "decode jwt tokens", "encode"},
+	{"secret", "encrypt or decrypt secrets", "encode"},
+	{"qr", "generate qr codes", "encode"},
+	{"id", "git identity management", "meta"},
+	{"sshm", "ssh connection manager", "meta"},
+	{"alias", "manage shell command aliases", "meta"},
+}
+
+func setupCommands(f *factory.Factory, state *wizardState) error {
+	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+
+	customize, err := ui.RunConfirm(opts, ui.ConfirmSpec{
+		Title:   "customize enabled commands?",
+		Default: false,
+	})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	if !customize {
+		return nil
+	}
+
+	state.setupCmds = true
+
+	options := make([]ui.Option[string], len(toggleableCommands))
+	defaults := make([]string, len(toggleableCommands))
+	for i, cmd := range toggleableCommands {
+		options[i] = ui.Option[string]{
+			Label:       cmd.Name,
+			Description: fmt.Sprintf("(%s) %s", cmd.Group, cmd.Short),
+			Value:       cmd.Name,
+		}
+		defaults[i] = cmd.Name
+	}
+
+	selected, err := ui.RunMultiSelect(opts, ui.MultiSelectSpec[string]{
+		Title:    "enable or disable commands",
+		Options:  options,
+		Defaults: defaults,
+	})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+
+	selectedSet := make(map[string]bool, len(selected))
+	for _, s := range selected {
+		selectedSet[s] = true
+	}
+
+	var disabled []string
+	for _, cmd := range toggleableCommands {
+		if !selectedSet[cmd.Name] {
+			disabled = append(disabled, cmd.Name)
+		}
+	}
+	state.disableCmds = disabled
+
+	return nil
+}
+
+func reviewAndConfirm(f *factory.Factory, state *wizardState) error {
+	opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+
+	fmt.Fprintln(f.IO.ErrOut, "")
+	fmt.Fprintf(f.IO.ErrOut, "  workspace roots: %d configured\n", len(state.cfg.Workspace.Roots))
+	fmt.Fprintf(f.IO.ErrOut, "  git identity: %s\n", state.profileName)
+
+	if state.cfg.AI.Provider != "" {
+		fmt.Fprintf(f.IO.ErrOut, "  ai: %s / %s\n", state.cfg.AI.Provider, state.cfg.AI.Model)
+	} else {
+		fmt.Fprintln(f.IO.ErrOut, "  ai: skipped")
+	}
+
+	if state.setupShell {
+		fmt.Fprintf(f.IO.ErrOut, "  shell: %s — %s\n", state.shellName, strings.Join(state.shellFeats, ", "))
+	} else {
+		fmt.Fprintln(f.IO.ErrOut, "  shell: skipped")
+	}
+
+	if state.setupCmds && len(state.disableCmds) > 0 {
+		fmt.Fprintf(f.IO.ErrOut, "  commands: %d disabled\n", len(state.disableCmds))
+	} else {
+		fmt.Fprintln(f.IO.ErrOut, "  commands: all enabled")
+	}
+
+	fmt.Fprintln(f.IO.ErrOut, "")
+
+	confirmed, err := ui.RunConfirm(opts, ui.ConfirmSpec{Title: "save and apply?", Default: true})
+	if errors.Is(err, ui.ErrAborted) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	if !confirmed {
+		return errors.New("aborted")
+	}
+
+	return nil
+}
+
+func applyAndSave(f *factory.Factory, state *wizardState) error {
+	if state.setupCmds {
+		state.cfg.DisabledCommands = state.disableCmds
+	}
+
+	if err := config.Save(state.cfg); err != nil {
+		return fmt.Errorf("save config: %w", err)
+	}
+
+	home, _ := os.UserHomeDir()
+	configFile := filepath.Join(home, ".config", "may", "config.yaml")
+	fmt.Fprintf(f.IO.ErrOut, "✓ config saved to %s\n", configFile)
+
+	if state.setupShell && state.profilePath != "" {
+		var aliases []shell.AliasEntry
+		for _, a := range state.cfg.Aliases {
+			aliases = append(aliases, shell.AliasEntry{Name: a.Name, Command: a.Command})
+		}
+
+		snippet := shell.BuildSnippet(state.shellName, state.shellFeats, "", aliases...)
+		featuresLabel := strings.Join(state.shellFeats, ",")
+
+		if err := shell.WriteBlock(state.profilePath, featuresLabel, snippet); err != nil {
+			return fmt.Errorf("write shell block: %w", err)
+		}
+
+		fmt.Fprintf(f.IO.ErrOut, "✓ shell integration written to %s\n", state.profilePath)
+		fmt.Fprintf(f.IO.ErrOut, "  run: source %s\n", state.profilePath)
+	}
+
 	return nil
 }

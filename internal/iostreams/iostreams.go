@@ -39,6 +39,16 @@ func (s *IOStreams) IsTerminal() bool {
 	return term.IsTerminal(int(f.Fd()))
 }
 
+// IsErrTerminal reports whether ErrOut is connected to an interactive terminal.
+// Use this instead of IsTerminal when stdout may be captured (e.g. shell wrapper functions).
+func (s *IOStreams) IsErrTerminal() bool {
+	f, ok := s.ErrOut.(*os.File)
+	if !ok {
+		return false
+	}
+	return term.IsTerminal(int(f.Fd()))
+}
+
 // ColorEnabled reports whether terminal color output is appropriate.
 func (s *IOStreams) ColorEnabled() bool {
 	if os.Getenv("NO_COLOR") != "" {

@@ -18,6 +18,7 @@ var reservedNames = map[string]bool{
 	"jwt": true, "secret": true, "dotfiles": true, "weather": true,
 	"db": true, "recent": true, "alias": true, "configure": true,
 	"sshm": true, "ssh": true, "k": true, "commands": true,
+	"cmd": true, "cmds": true, "qr": true,
 }
 
 func NewCmdAlias(f *factory.Factory) *cobra.Command {

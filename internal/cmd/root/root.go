@@ -21,6 +21,7 @@ import (
 	"github.com/0x6d6179/may/internal/cmd/open"
 	pathcmd "github.com/0x6d6179/may/internal/cmd/path"
 	"github.com/0x6d6179/may/internal/cmd/port"
+	"github.com/0x6d6179/may/internal/cmd/qr"
 	"github.com/0x6d6179/may/internal/cmd/recent"
 	"github.com/0x6d6179/may/internal/cmd/run"
 	"github.com/0x6d6179/may/internal/cmd/secret"
@@ -91,6 +92,7 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 	addCmd(cmd, "encode", hash.NewCmdHash(f))
 	addCmd(cmd, "encode", jwt.NewCmdJwt(f))
 	addCmd(cmd, "encode", secret.NewCmdSecret(f))
+	addCmd(cmd, "encode", qr.NewCmdQr(f))
 
 	// identity & meta
 	addCmd(cmd, "meta", id.NewCmdId(f))

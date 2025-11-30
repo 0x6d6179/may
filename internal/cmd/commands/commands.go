@@ -42,6 +42,7 @@ var registry = []cmdMeta{
 	{Name: "hash", Group: "encode", Short: "hash strings or files"},
 	{Name: "jwt", Group: "encode", Short: "decode jwt tokens"},
 	{Name: "secret", Group: "encode", Short: "encrypt or decrypt secrets"},
+	{Name: "qr", Group: "encode", Short: "generate qr codes"},
 	{Name: "id", Group: "meta", Short: "git identity management"},
 	{Name: "sshm", Group: "meta", Short: "ssh connection manager", ShellFeature: "sshm"},
 	{Name: "alias", Group: "meta", Short: "manage shell command aliases"},
@@ -61,8 +62,9 @@ var groupTitles = map[string]string{
 
 func NewCmdCommands(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commands",
-		Short: "manage may commands",
+		Use:     "commands",
+		Short:   "manage may commands",
+		Aliases: []string{"cmd", "cmds"},
 	}
 	cmd.AddCommand(newCmdCommandsList(f))
 	cmd.AddCommand(newCmdCommandsConfigure(f))
@@ -86,9 +88,9 @@ func newCmdCommandsList(f *factory.Factory) *cobra.Command {
 						continue
 					}
 					if disabled[m.Name] {
-						fmt.Fprintf(f.IO.ErrOut, "  ○ %-12s  %s\n", m.Name, m.Short)
+						fmt.Fprintf(f.IO.ErrOut, "  ○ %-14s  %s\n", m.Name, m.Short)
 					} else {
-						fmt.Fprintf(f.IO.ErrOut, "  ● %-12s  %s\n", m.Name, m.Short)
+						fmt.Fprintf(f.IO.ErrOut, "  ● %-14s  %s\n", m.Name, m.Short)
 					}
 				}
 			}
@@ -240,9 +242,12 @@ func offerAddShellFeature(m cmdMeta, opts ui.RunOptions, cfg *config.Config, f *
 }
 
 func buildAliasEntries(cfg *config.Config) []shell.AliasEntry {
-	entries := make([]shell.AliasEntry, len(cfg.Aliases))
-	for i, a := range cfg.Aliases {
-		entries[i] = shell.AliasEntry{Name: a.Name, Command: a.Command}
+	entries := make([]shell.AliasEntry, 0, len(cfg.Aliases)+len(cfg.ShellAliasedCommands))
+	for _, a := range cfg.Aliases {
+		entries = append(entries, shell.AliasEntry{Name: a.Name, Command: a.Command})
+	}
+	for _, name := range cfg.ShellAliasedCommands {
+		entries = append(entries, shell.AliasEntry{Name: name, Command: name})
 	}
 	return entries
 }

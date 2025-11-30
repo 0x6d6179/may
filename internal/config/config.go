@@ -12,11 +12,12 @@ import (
 
 // Config is the top-level configuration for may.
 type Config struct {
-	Workspace        WorkspaceConfig `yaml:"workspace"`
-	Git              GitConfig       `yaml:"git"`
-	AI               AIConfig        `yaml:"ai"`
-	Aliases          []Alias         `yaml:"aliases,omitempty"`
-	DisabledCommands []string        `yaml:"disabled_commands,omitempty"`
+	Workspace            WorkspaceConfig `yaml:"workspace"`
+	Git                  GitConfig       `yaml:"git"`
+	AI                   AIConfig        `yaml:"ai"`
+	Aliases              []Alias         `yaml:"aliases,omitempty"`
+	DisabledCommands     []string        `yaml:"disabled_commands,omitempty"`
+	ShellAliasedCommands []string        `yaml:"shell_aliased_commands,omitempty"`
 }
 
 // WorkspaceConfig holds workspace root definitions.
