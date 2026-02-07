@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -79,9 +80,16 @@ func (m *SelectModel[T]) FooterHints() []Hint {
 	}
 }
 
-func (m *SelectModel[T]) SetSize(width, _ int) {
+func (m *SelectModel[T]) SetSize(width, height int) {
 	m.width = width
 	m.filter.Width = width - 4
+	if height > 0 {
+		visible := height - 6
+		if visible < 3 {
+			visible = 3
+		}
+		m.maxVisible = visible
+	}
 }
 
 func (m *SelectModel[T]) Init() tea.Cmd {
@@ -213,6 +221,11 @@ func (m *SelectModel[T]) View() string {
 		end = len(m.filtered)
 	}
 
+	if m.offset > 0 {
+		b.WriteString(StyleHint.Render(fmt.Sprintf("  ↑ %d more", m.offset)))
+		b.WriteString("\n")
+	}
+
 	visible := m.filtered[m.offset:end]
 	for i, idx := range visible {
 		absIdx := m.offset + i
@@ -237,9 +250,12 @@ func (m *SelectModel[T]) View() string {
 			b.WriteString(StyleDescription.Render(desc.String()))
 		}
 
-		if i < len(visible)-1 {
-			b.WriteString("\n")
-		}
+		b.WriteString("\n")
+	}
+
+	remaining := len(m.filtered) - end
+	if remaining > 0 {
+		b.WriteString(StyleHint.Render(fmt.Sprintf("  ↓ %d more", remaining)))
 	}
 
 	if len(m.filtered) == 0 {

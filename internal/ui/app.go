@@ -33,6 +33,7 @@ type App struct {
 	result   any
 	err      error
 	width    int
+	height   int
 	quitting bool
 }
 
@@ -73,7 +74,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, tea.Quit
 		}
 		a.step = next
-		a.step.SetSize(a.width, 0)
+		a.step.SetSize(a.width, a.height)
 		return a, a.step.Init()
 
 	case stepAbortMsg:
@@ -86,7 +87,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if a.width > 80 {
 			a.width = 80
 		}
-		a.step.SetSize(a.width, msg.Height)
+		a.height = msg.Height
+		a.step.SetSize(a.width, a.height)
 	}
 
 	var cmd tea.Cmd

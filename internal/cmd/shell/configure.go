@@ -12,28 +12,51 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var aliasableCommands = []ui.Option[string]{
-	{Label: "branch", Description: "list or switch git branches", Value: "branch"},
-	{Label: "recent", Description: "show recently visited projects", Value: "recent"},
-	{Label: "open", Description: "open repository in browser", Value: "open"},
-	{Label: "stash", Description: "manage git stashes", Value: "stash"},
-	{Label: "todo", Description: "find todo comments", Value: "todo"},
-	{Label: "env", Description: "manage .env files", Value: "env"},
-	{Label: "run", Description: "run project scripts", Value: "run"},
-	{Label: "port", Description: "show or kill processes on a port", Value: "port"},
-	{Label: "db", Description: "connect to database from .env urls", Value: "db"},
-	{Label: "path", Description: "inspect and debug path", Value: "path"},
-	{Label: "ip", Description: "show local and public ip addresses", Value: "ip"},
-	{Label: "dotfiles", Description: "manage dotfile symlinks", Value: "dotfiles"},
-	{Label: "weather", Description: "show weather forecast", Value: "weather"},
-	{Label: "b64", Description: "base64 encode/decode", Value: "b64"},
-	{Label: "uuid", Description: "generate uuids", Value: "uuid"},
-	{Label: "hash", Description: "hash strings or files", Value: "hash"},
-	{Label: "jwt", Description: "decode jwt tokens", Value: "jwt"},
-	{Label: "secret", Description: "encrypt or decrypt secrets", Value: "secret"},
-	{Label: "qr", Description: "generate qr codes", Value: "qr"},
-	{Label: "id", Description: "git identity management", Value: "id"},
-	{Label: "alias", Description: "manage shell command aliases", Value: "alias"},
+var allCommands = []struct {
+	name  string
+	short string
+}{
+	{"ws", "workspace management"},
+	{"wt", "git worktree manager"},
+	{"j", "smart directory jump"},
+	{"branch", "list or switch git branches"},
+	{"recent", "show recently visited projects"},
+	{"open", "open repository in browser"},
+	{"ai", "ai assistant"},
+	{"stash", "manage git stashes"},
+	{"todo", "find todo comments"},
+	{"env", "manage .env files"},
+	{"run", "run project scripts"},
+	{"port", "show or kill processes on a port"},
+	{"db", "connect to database from .env urls"},
+	{"path", "inspect and debug path"},
+	{"ip", "show local and public ip addresses"},
+	{"dotfiles", "manage dotfile symlinks"},
+	{"weather", "show weather forecast"},
+	{"b64", "base64 encode/decode"},
+	{"uuid", "generate uuids"},
+	{"hash", "hash strings or files"},
+	{"jwt", "decode jwt tokens"},
+	{"secret", "encrypt or decrypt secrets"},
+	{"qr", "generate qr codes"},
+	{"id", "git identity management"},
+	{"sshm", "ssh connection manager"},
+	{"alias", "manage shell command aliases"},
+}
+
+func buildAliasableCommands(disabled map[string]bool) []ui.Option[string] {
+	var opts []ui.Option[string]
+	for _, cmd := range allCommands {
+		if disabled[cmd.name] {
+			continue
+		}
+		opts = append(opts, ui.Option[string]{
+			Label:       cmd.name,
+			Description: cmd.short,
+			Value:       cmd.name,
+		})
+	}
+	return opts
 }
 
 func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
@@ -81,7 +104,12 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			cmdAliases, err := selectCommandAliases(opts, cfg.ShellAliasedCommands)
+			disabled := make(map[string]bool, len(cfg.DisabledCommands))
+			for _, name := range cfg.DisabledCommands {
+				disabled[name] = true
+			}
+
+			cmdAliases, err := selectCommandAliases(opts, cfg.ShellAliasedCommands, disabled)
 			if errors.Is(err, ui.ErrAborted) {
 				return nil
 			}
@@ -139,16 +167,11 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 	return cmd
 }
 
-func saveConfig(cfg *config.Config) error {
-	return config.Save(cfg)
-}
-
-func selectCommandAliases(opts ui.RunOptions, current []string) ([]string, error) {
-	defaults := current
+func selectCommandAliases(opts ui.RunOptions, current []string, disabled map[string]bool) ([]string, error) {
 	return ui.RunMultiSelect(opts, ui.MultiSelectSpec[string]{
 		Title:    "select command aliases  (shell functions for any command)",
-		Options:  aliasableCommands,
-		Defaults: defaults,
+		Options:  buildAliasableCommands(disabled),
+		Defaults: current,
 	})
 }
 

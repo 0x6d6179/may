@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,6 +28,9 @@ func newMultiSelect[T comparable](spec MultiSelectSpec[T]) *MultiSelectModel[T] 
 	height := spec.Height
 	if height <= 0 {
 		height = len(spec.Options)
+		if height > 10 {
+			height = 10
+		}
 		if height == 0 {
 			height = 5
 		}
@@ -61,8 +65,15 @@ func (m *MultiSelectModel[T]) FooterHints() []Hint {
 	}
 }
 
-func (m *MultiSelectModel[T]) SetSize(width, _ int) {
+func (m *MultiSelectModel[T]) SetSize(width, height int) {
 	m.width = width
+	if height > 0 {
+		visible := height - 6
+		if visible < 3 {
+			visible = 3
+		}
+		m.maxVisible = visible
+	}
 }
 
 func (m *MultiSelectModel[T]) Init() tea.Cmd {
@@ -127,6 +138,11 @@ func (m *MultiSelectModel[T]) View() string {
 		end = len(m.options)
 	}
 
+	if m.offset > 0 {
+		b.WriteString(StyleHint.Render(fmt.Sprintf("  ↑ %d more", m.offset)))
+		b.WriteString("\n")
+	}
+
 	for i := m.offset; i < end; i++ {
 		opt := m.options[i]
 
@@ -152,9 +168,12 @@ func (m *MultiSelectModel[T]) View() string {
 			b.WriteString(StyleDescription.Render(opt.Description))
 		}
 
-		if i < end-1 {
-			b.WriteString("\n")
-		}
+		b.WriteString("\n")
+	}
+
+	remaining := len(m.options) - end
+	if remaining > 0 {
+		b.WriteString(StyleHint.Render(fmt.Sprintf("  ↓ %d more", remaining)))
 	}
 
 	return b.String()
