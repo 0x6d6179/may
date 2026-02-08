@@ -12,6 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var featureKeys = map[string]bool{
+	featureWS: true, featureWT: true, featureAI: true,
+	featureJ: true, featureSSHM: true, featureAIFix: true,
+	featureCompletion: true,
+}
+
 var allCommands = []struct {
 	name  string
 	short string
@@ -44,19 +50,75 @@ var allCommands = []struct {
 	{"alias", "manage shell command aliases"},
 }
 
-func buildAliasableCommands(disabled map[string]bool) []ui.Option[string] {
-	var opts []ui.Option[string]
-	for _, cmd := range allCommands {
-		if disabled[cmd.name] {
+var defaultIntegrations = []string{featureWS, featureWT, featureAI, featureJ, featureCompletion}
+
+func buildIntegrationOptions(disabled map[string]bool) []ui.Option[string] {
+	opts := []ui.Option[string]{
+		{Label: "ai fix", Description: "auto-suggest fix on failed commands", Value: featureAIFix},
+		{Label: "completion", Description: "shell tab completion", Value: featureCompletion},
+	}
+
+	shellFuncs := []struct{ label, value, desc string }{
+		{"ws", featureWS, "workspace management"},
+		{"wt", featureWT, "git worktree manager"},
+		{"ai", featureAI, "ai assistant"},
+		{"j", featureJ, "smart directory jump (+ k to go back)"},
+		{"sshm", featureSSHM, "ssh connection manager"},
+	}
+	for _, sf := range shellFuncs {
+		if disabled[sf.value] {
 			continue
 		}
-		opts = append(opts, ui.Option[string]{
-			Label:       cmd.name,
-			Description: cmd.short,
-			Value:       cmd.name,
-		})
+		opts = append(opts, ui.Option[string]{Label: sf.label, Description: sf.desc, Value: sf.value})
 	}
+
+	for _, cmd := range allCommands {
+		if featureKeys[cmd.name] || disabled[cmd.name] {
+			continue
+		}
+		opts = append(opts, ui.Option[string]{Label: cmd.name, Description: cmd.short, Value: cmd.name})
+	}
+
 	return opts
+}
+
+func SelectIntegrations(opts ui.RunOptions, currentFeatures []string, currentAliases []string, disabled map[string]bool, dev bool) ([]string, []string, error) {
+	var defaults []string
+	if len(currentFeatures) == 0 && len(currentAliases) == 0 {
+		defaults = defaultIntegrations
+	} else {
+		for _, f := range currentFeatures {
+			if featureKeys[f] {
+				defaults = append(defaults, f)
+			}
+		}
+		defaults = append(defaults, currentAliases...)
+	}
+
+	title := "configure shell integrations  (may wrapper always included)"
+	if dev {
+		title = "configure shell integrations  (may wrapper + dev mode always included)"
+	}
+
+	selected, err := ui.RunMultiSelect(opts, ui.MultiSelectSpec[string]{
+		Title:    title,
+		Options:  buildIntegrationOptions(disabled),
+		Defaults: defaults,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var features []string
+	var cmdAliases []string
+	for _, v := range selected {
+		if featureKeys[v] {
+			features = append(features, v)
+		} else {
+			cmdAliases = append(cmdAliases, v)
+		}
+	}
+	return features, cmdAliases, nil
 }
 
 func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
@@ -76,9 +138,20 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 				return fmt.Errorf("unsupported shell: %s", sh)
 			}
 
-			opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
 
-			features, err := SelectFeatures(opts, dev)
+			disabled := make(map[string]bool, len(cfg.DisabledCommands))
+			for _, name := range cfg.DisabledCommands {
+				disabled[name] = true
+			}
+
+			opts := ui.RunOptions{In: f.IO.In, Out: f.IO.ErrOut}
+			currentFeatures, _ := ReadFeatures(profile)
+
+			features, cmdAliases, err := SelectIntegrations(opts, currentFeatures, cfg.ShellAliasedCommands, disabled, dev)
 			if errors.Is(err, ui.ErrAborted) {
 				return nil
 			}
@@ -97,24 +170,6 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("get working directory: %w", err)
 				}
-			}
-
-			cfg, err := f.Config()
-			if err != nil {
-				return err
-			}
-
-			disabled := make(map[string]bool, len(cfg.DisabledCommands))
-			for _, name := range cfg.DisabledCommands {
-				disabled[name] = true
-			}
-
-			cmdAliases, err := selectCommandAliases(opts, cfg.ShellAliasedCommands, disabled)
-			if errors.Is(err, ui.ErrAborted) {
-				return nil
-			}
-			if err != nil {
-				return err
 			}
 
 			var aliases []AliasEntry
@@ -165,37 +220,4 @@ func NewCmdShellConfigure(f *factory.Factory) *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&dev, "dev", false, "prepend cwd to PATH (development mode)")
 	return cmd
-}
-
-func selectCommandAliases(opts ui.RunOptions, current []string, disabled map[string]bool) ([]string, error) {
-	return ui.RunMultiSelect(opts, ui.MultiSelectSpec[string]{
-		Title:    "select command aliases  (shell functions for any command)",
-		Options:  buildAliasableCommands(disabled),
-		Defaults: current,
-	})
-}
-
-func SelectFeatures(opts ui.RunOptions, dev bool) ([]string, error) {
-	options := []ui.Option[string]{
-		{Label: "ws alias", Description: "switch workspace and cd", Value: featureWS},
-		{Label: "wt alias", Description: "switch worktree and cd", Value: featureWT},
-		{Label: "ai alias", Description: "ai assistant shortcut", Value: featureAI},
-		{Label: "ai fix", Description: "auto-suggest fix on command error", Value: featureAIFix},
-		{Label: "j alias", Description: "smart directory jump with fuzzy matching", Value: featureJ},
-		{Label: "sshm alias", Description: "ssh connection manager shortcut", Value: featureSSHM},
-		{Label: "completion", Description: "shell tab completion", Value: featureCompletion},
-	}
-
-	defaults := []string{featureWS, featureWT, featureAI, featureJ, featureCompletion}
-
-	title := "select features  (core always included)"
-	if dev {
-		title = "select features  (core + dev always included)"
-	}
-
-	return ui.RunMultiSelect(opts, ui.MultiSelectSpec[string]{
-		Title:    title,
-		Options:  options,
-		Defaults: defaults,
-	})
 }

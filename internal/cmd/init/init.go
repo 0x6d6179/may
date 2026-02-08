@@ -27,15 +27,16 @@ func NewCmdInit(f *factory.Factory) *cobra.Command {
 }
 
 type wizardState struct {
-	cfg         *config.Config
-	profileName string
-	aiProvider  string
-	shellName   string
-	shellFeats  []string
-	profilePath string
-	disableCmds []string
-	setupShell  bool
-	setupCmds   bool
+	cfg             *config.Config
+	profileName     string
+	aiProvider      string
+	shellName       string
+	shellFeats      []string
+	shellCmdAliases []string
+	profilePath     string
+	disableCmds     []string
+	setupShell      bool
+	setupCmds       bool
 }
 
 func runInit(f *factory.Factory) error {
@@ -361,7 +362,7 @@ func setupShellIntegration(f *factory.Factory, state *wizardState) error {
 		}
 	}
 
-	feats, err := shell.SelectFeatures(opts, false)
+	feats, cmdAliases, err := shell.SelectIntegrations(opts, nil, nil, nil, false)
 	if errors.Is(err, ui.ErrAborted) {
 		return err
 	}
@@ -374,6 +375,7 @@ func setupShellIntegration(f *factory.Factory, state *wizardState) error {
 	state.setupShell = true
 	state.shellName = shellName
 	state.shellFeats = feats
+	state.shellCmdAliases = cmdAliases
 	state.profilePath = shell.ProfileFile(shellName)
 
 	return nil
@@ -524,6 +526,12 @@ func applyAndSave(f *factory.Factory, state *wizardState) error {
 		var aliases []shell.AliasEntry
 		for _, a := range state.cfg.Aliases {
 			aliases = append(aliases, shell.AliasEntry{Name: a.Name, Command: a.Command})
+		}
+		for _, name := range state.shellCmdAliases {
+			aliases = append(aliases, shell.AliasEntry{Name: name, Command: name})
+		}
+		if len(state.shellCmdAliases) > 0 {
+			state.cfg.ShellAliasedCommands = state.shellCmdAliases
 		}
 
 		snippet := shell.BuildSnippet(state.shellName, state.shellFeats, "", aliases...)
