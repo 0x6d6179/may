@@ -10,7 +10,7 @@ brew tap 0x6d6179/may && brew install may
 
 ## what it does
 
-may is a single binary that replaces a collection of shell scripts and aliases with a consistent, discoverable interface.
+may is a single binary that replaces a pile of shell scripts and ad-hoc aliases with a consistent, discoverable interface.
 
 ```
 workspace & navigation
@@ -26,7 +26,7 @@ ai
 
 git utilities
   stash       interactive stash manager
-  todo        find todo, fixme, and hack comments
+  todo        find todo, fixme, and hack comments in the codebase
   env         manage .env files
 
 project tools
@@ -35,7 +35,7 @@ project tools
   db          connect to a database from .env urls
 
 system & path
-  dotfiles    manage dotfile symlinks with git-backed migration
+  dotfiles    git-backed dotfile migration, sync, and restore
   ip          show local and public ip addresses
   path        inspect and debug $PATH
   weather     weather forecast in your terminal
@@ -49,11 +49,11 @@ encode / decode
   qr          generate qr codes
 
 identity & meta
-  id          git identity management — switch profiles per directory
+  id          per-directory git identity — auto-switch name/email by path
   sshm        ssh connection manager
-  alias       manage shell function aliases
-  commands    list and toggle available commands
-  shell       configure shell integration
+  alias       user-defined shell aliases (map any name to any may command)
+  commands    enable or disable commands; show status  (also: cmd, cmds)
+  shell       manage shell integration — configure aliases and hooks
 ```
 
 ---
@@ -88,13 +88,20 @@ may init
 
 ## shell integration
 
-may uses a shell wrapper to enable directory-changing commands (`ws`, `wt`, `j`). run:
+may needs a shell wrapper to intercept stdout — this is how `ws`, `wt`, and `j` change your directory instead of just printing a path.
+
+run the interactive setup:
 
 ```sh
 may shell configure
 ```
 
-this writes a block to your shell profile (`~/.zshrc`, `~/.bashrc`, etc.) and lets you pick which integrations to enable.
+it writes a managed block to your shell profile (`~/.zshrc`, `~/.bashrc`, etc.) with two always-on pieces:
+
+- `may()` — wraps the binary; if stdout is a directory path, calls `cd` instead of printing
+- `_may_id_hook` — fires on `cd` to apply the right git identity for the directory
+
+everything else is opt-in shell function aliases — `function ws() { may ws "$@"; }` — you pick which commands get them.
 
 ---
 

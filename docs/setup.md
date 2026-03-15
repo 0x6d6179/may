@@ -39,7 +39,7 @@ the setup wizard walks you through:
 - **workspace roots** — directories where your projects live (e.g. `~/Code`, `~/Projects`)
 - **git identity** — name, email, github username. supports multiple profiles mapped per directory via `may id`
 - **ai** — provider (openrouter, cerebras, or custom openai-compatible endpoint), api key, model
-- **shell integration** — writes a block to your shell profile with the integrations you pick
+- **shell integration** — writes a managed block to your shell profile
 
 ---
 
@@ -53,23 +53,51 @@ to apply immediately after first configure:
 source ~/.zshrc   # or ~/.bashrc
 ```
 
-### what the core wrapper does
+### always-on: the core wrapper
 
-the `may()` shell function intercepts stdout: if the output is a valid directory path, it calls `cd` instead of printing it. this is how `ws`, `wt`, and `j` change your working directory.
+two things are always written regardless of what you select:
 
-### available integrations
+**`may()` function** — wraps the binary. if stdout is a valid directory path, calls `cd` instead of printing it. this is what allows `ws`, `wt`, and `j` to change your working directory.
 
-| integration | what it adds |
+**`_may_id_hook`** — fires every time you `cd`. runs `may id status --apply --quiet` to auto-switch your git identity based on the directory.
+
+### shell hooks
+
+two optional integrations that modify shell behavior beyond simple aliases:
+
+| hook | what it does |
 |---|---|
-| `ws` | `ws <name>` — switch workspace |
-| `wt` | `wt <name>` — switch worktree |
-| `ai` | `ai <prompt>` — shorthand for `may ai` |
-| `j` | `j <query>` — fuzzy jump; `k` — go back |
-| `sshm` | `sshm` — shorthand for `may sshm` |
-| `ai fix` | hooks into shell error handling to suggest fixes |
-| `completion` | tab completion for all commands |
+| `ai fix` | hooks into `PROMPT_COMMAND` / `precmd` to detect non-zero exit codes and run `may ai fix` |
+| `completion` | runs `eval "$(may shell completion zsh)"` (or bash/fish) for tab completion |
 
-any command can also get a plain shell alias (`function branch() { may branch "$@"; }`) — pick them in `may shell configure`.
+### command aliases
+
+everything else — including `ws`, `wt`, `ai`, `j`, `sshm`, and any other command you pick — is a shell function alias:
+
+```sh
+function ws() { may ws "$@"; }
+function branch() { may branch "$@"; }
+```
+
+they are all identical in nature. the only difference is which ones are checked by default. pick any combination in `may shell configure`.
+
+---
+
+## command management
+
+```sh
+may commands list        # show all commands with enabled/disabled status
+may commands configure   # interactive enable/disable
+```
+
+`may commands configure` opens a multi-select. uncheck a command to disable it — it will be hidden and return an error if invoked. for commands that have a shell alias (`ws`, `wt`, `ai`, `j`, `sshm`), disabling a command will also remove its alias from your shell profile automatically.
+
+`commands` is also available as `cmd` or `cmds`.
+
+### alias vs commands
+
+- `may alias` — manages **user-defined** shell aliases. you pick the name and which `may` command it maps to. these are written to your shell block.
+- `may commands` — manages which **built-in** may commands are enabled, and reflects their status.
 
 ---
 
