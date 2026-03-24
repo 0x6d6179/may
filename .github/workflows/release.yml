@@ -11,6 +11,11 @@ on:
           - patch
           - minor
           - major
+      prerelease:
+        description: "mark as pre-release (beta)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -31,7 +36,8 @@ jobs:
       - name: compute next version
         id: version
         run: |
-          latest=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          latest=$(git tag -l 'v*' --sort=-v:refname | grep -v beta | head -1)
+          latest="${latest:-v0.0.0}"
           major=$(echo "$latest" | sed 's/^v//' | cut -d. -f1)
           minor=$(echo "$latest" | sed 's/^v//' | cut -d. -f2)
           patch=$(echo "$latest" | sed 's/^v//' | cut -d. -f3)
@@ -43,8 +49,19 @@ jobs:
           esac
 
           version="${major}.${minor}.${patch}"
+
+          if [[ "${{ inputs.prerelease }}" == "true" ]]; then
+            # find next beta number for this version
+            beta=1
+            while git tag -l "v${version}-beta.${beta}" | grep -q .; do
+              beta=$((beta + 1))
+            done
+            version="${version}-beta.${beta}"
+          fi
+
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${{ inputs.prerelease }}" >> "$GITHUB_OUTPUT"
 
       - name: build binaries
         run: |
@@ -74,9 +91,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ steps.version.outputs.tag }}"
+          flags="--title ${tag} --generate-notes"
+          if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then
+            flags="${flags} --prerelease"
+          fi
           gh release create "${tag}" \
-            --title "${tag}" \
-            --generate-notes \
+            ${flags} \
             may_darwin_amd64 \
             may_darwin_arm64 \
             may_linux_amd64 \
@@ -84,6 +104,7 @@ jobs:
             checksums.txt
 
       - name: update homebrew formula
+        if: inputs.prerelease == false
         env:
           TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
