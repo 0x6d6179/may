@@ -97,10 +97,8 @@ jobs:
           fi
           notes=$(gh api repos/${{ github.repository }}/releases/generate-notes \
             -f tag_name="${tag}" --jq '.body')
-          notes="${notes}
-
----
-released by @${{ github.actor }}"
+          printf -v footer '\n---\nreleased by @%s' "${{ github.actor }}"
+          notes="${notes}${footer}"
           gh release create "${tag}" \
             ${flags} \
             --notes "${notes}" \
