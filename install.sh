@@ -163,12 +163,12 @@ main() {
 
   check_existing
 
-  if install_binary 2>/dev/null; then
-    :
-  elif command -v go >/dev/null 2>&1; then
+  if command -v go >/dev/null 2>&1; then
     install_go
+  elif install_binary 2>/dev/null; then
+    :
   else
-    err "no pre-built binary available and go is not installed.
+    err "go is not installed and no pre-built binary available.
        install go from https://go.dev/dl/ then re-run this script,
        or install via homebrew:  brew tap 0x6d6179/may && brew install may"
   fi
