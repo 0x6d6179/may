@@ -47,7 +47,8 @@ func NewCmdRoot(f *factory.Factory) *cobra.Command {
 		SilenceErrors: true,
 	}
 
-	cmd.Version = version.Version
+	cmd.Version = version.Full()
+	cmd.SetVersionTemplate("may {{.Version}}\n")
 
 	cmd.AddGroup(
 		&cobra.Group{ID: "nav", Title: "workspace & navigation"},

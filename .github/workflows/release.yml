@@ -1,0 +1,130 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "version bump"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: compute next version
+        id: version
+        run: |
+          latest=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          major=$(echo "$latest" | sed 's/^v//' | cut -d. -f1)
+          minor=$(echo "$latest" | sed 's/^v//' | cut -d. -f2)
+          patch=$(echo "$latest" | sed 's/^v//' | cut -d. -f3)
+
+          case "${{ inputs.bump }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+
+          version="${major}.${minor}.${patch}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+
+      - name: build binaries
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          ldflags="-s -w -X github.com/0x6d6179/may/internal/version.Version=${version}"
+
+          for pair in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64; do
+            os="${pair%/*}"
+            arch="${pair#*/}"
+            output="may_${os}_${arch}"
+            echo "building ${output}..."
+            GOOS="${os}" GOARCH="${arch}" go build -ldflags "${ldflags}" -trimpath -o "${output}" ./cmd/may
+          done
+
+      - name: generate checksums
+        run: sha256sum may_* > checksums.txt
+
+      - name: create tag
+        run: |
+          git config user.name "may"
+          git config user.email "ryana@ryanaque.com"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: create github release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.version.outputs.tag }}"
+          gh release create "${tag}" \
+            --title "${tag}" \
+            --generate-notes \
+            may_darwin_amd64 \
+            may_darwin_arm64 \
+            may_linux_amd64 \
+            may_linux_arm64 \
+            checksums.txt
+
+      - name: update homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.version.outputs.tag }}"
+          version="${{ steps.version.outputs.version }}"
+          rev=$(git rev-parse "${tag}")
+
+          formula='class May < Formula
+            desc "personal productivity toolkit"
+            homepage "https://github.com/0x6d6179/may"
+            url "https://github.com/0x6d6179/may.git",
+              tag:      "'"${tag}"'",
+              revision: "'"${rev}"'"
+            license "MIT"
+
+            head "https://github.com/0x6d6179/may.git", branch: "main"
+
+            depends_on "go" => :build
+
+            def install
+              ldflags = "-X github.com/0x6d6179/may/internal/version.Version=#{version}"
+              system "go", "build", "-ldflags", ldflags, "-o", bin/"may", "./cmd/may"
+            end
+
+            def caveats
+              <<~EOS
+                run `may init` to configure may for your system.
+              EOS
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/may --version")
+            end
+          end'
+
+          # clone tap, update formula, push
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/0x6d6179/homebrew-may.git" /tmp/tap
+          echo "${formula}" > /tmp/tap/Formula/may.rb
+          cd /tmp/tap
+          git config user.name "may"
+          git config user.email "ryana@ryanaque.com"
+          git add Formula/may.rb
+          git commit -m "update may to ${tag}" || echo "no changes"
+          git push
