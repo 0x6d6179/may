@@ -69,7 +69,7 @@ brew tap 0x6d6179/may && brew install may
 ### script
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/0x6d6179/may/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/0x6d6179/may/main/install.sh | bash
 ```
 
 ### go install

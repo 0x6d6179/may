@@ -8,12 +8,12 @@
 brew tap 0x6d6179/may && brew install may
 ```
 
-the tap uses the formula at `Formula/may.rb` in the main repo. builds from source — requires go.
+the tap lives at [0x6d6179/homebrew-may](https://github.com/0x6d6179/homebrew-may). builds from source — requires go.
 
 ### install script
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/0x6d6179/may/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/0x6d6179/may/main/install.sh | bash
 ```
 
 tries to download a pre-built binary first. falls back to `go install` if no binary is available for your platform. runs `may init` on completion.
