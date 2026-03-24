@@ -71,7 +71,7 @@ func TestCreate_RootNotFound(t *testing.T) {
 func TestList_EmptyRoots(t *testing.T) {
 	cfg := &config.Config{}
 	workspaces := List(cfg)
-	if workspaces != nil && len(workspaces) != 0 {
+	if len(workspaces) != 0 {
 		t.Errorf("List on empty config = %v; want empty slice", workspaces)
 	}
 }

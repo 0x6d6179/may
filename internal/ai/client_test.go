@@ -8,8 +8,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/0x6d6179/may/internal/config"
 )
 
 type chatResponseBody struct {
@@ -47,15 +45,6 @@ func newTestClient(baseURL, apiKey, model string, httpClient *http.Client) *Clie
 	return &Client{provider: provider, model: model}
 }
 
-func newTestClientFromConfig(baseURL, apiKey, model string, httpClient *http.Client) *Client {
-	cfg := &config.AIConfig{BaseURL: baseURL, APIKey: apiKey, Model: model}
-	c := NewClientFromConfig(cfg)
-	if or, ok := c.provider.(*OpenRouterClient); ok {
-		or.httpClient = httpClient
-	}
-	return c
-}
-
 func TestGenerateCommitMessages_ParseResponse(t *testing.T) {
 	wantPrimary := "feat(auth): add JWT login"
 	wantAlt1 := "feat(auth): implement JWT authentication"
@@ -65,7 +54,7 @@ func TestGenerateCommitMessages_ParseResponse(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(buildChatResponse(wantPrimary, wantAlt1, wantAlt2, wantAlt3))
+		_, _ = w.Write(buildChatResponse(wantPrimary, wantAlt1, wantAlt2, wantAlt3))
 	}))
 	defer srv.Close()
 
@@ -139,7 +128,7 @@ func TestGenerateCommitMessages_EmptyChoices(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"choices":[]}`))
+		_, _ = w.Write([]byte(`{"choices":[]}`))
 	}))
 	defer srv.Close()
 
@@ -156,7 +145,7 @@ func TestGenerateCommitMessages_MalformedPayload(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"choices":[{"message":{"content":"not-json"}}]}`))
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"not-json"}}]}`))
 	}))
 	defer srv.Close()
 

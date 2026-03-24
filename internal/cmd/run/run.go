@@ -3,6 +3,7 @@ package run
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -229,10 +230,10 @@ func listScripts(f *factory.Factory, runner string, scripts map[string]string) e
 		runnerLabel = "just recipes:"
 	}
 
-	out.Write([]byte(runnerLabel + "\n"))
+	fmt.Fprintln(out, runnerLabel)
 
 	for name, desc := range scripts {
-		out.Write([]byte("  " + name + "\t" + desc + "\n"))
+		fmt.Fprintf(out, "  %s\t%s\n", name, desc)
 	}
 
 	return nil

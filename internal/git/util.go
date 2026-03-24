@@ -153,15 +153,13 @@ func ShortStatus(path string) string {
 	}
 
 	branchLine := lines[0]
-	branch := "HEAD"
+	var branch string
 	if strings.HasPrefix(branchLine, "## ") {
 		b := strings.TrimPrefix(branchLine, "## ")
 		if idx := strings.Index(b, "..."); idx != -1 {
 			b = b[:idx]
 		}
-		if strings.HasPrefix(b, "No commits yet on ") {
-			b = strings.TrimPrefix(b, "No commits yet on ")
-		}
+		b = strings.TrimPrefix(b, "No commits yet on ")
 		branch = strings.TrimSpace(b)
 	} else {
 		branch = "no branch"

@@ -68,7 +68,7 @@ func NewCmdWtRm(f *factory.Factory) *cobra.Command {
 			}
 
 			// Best-effort branch deletion
-			runner.Run("branch", "-D", targetBranch)
+			_, _ = runner.Run("branch", "-D", targetBranch)
 
 			if _, err := runner.Run("worktree", "prune"); err != nil {
 				fmt.Fprintf(f.IO.ErrOut, "warning: worktree prune: %v\n", err)

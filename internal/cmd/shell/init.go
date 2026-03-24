@@ -86,16 +86,16 @@ func NewCmdShellInit(f *factory.Factory) *cobra.Command {
 			}
 			switch shell {
 			case "zsh":
-				io.WriteString(f.IO.Out, zshShim)
+				_, err = io.WriteString(f.IO.Out, zshShim)
 			case "bash":
-				io.WriteString(f.IO.Out, bashShim)
+				_, err = io.WriteString(f.IO.Out, bashShim)
 			case "fish":
-				io.WriteString(f.IO.Out, fishShim)
+				_, err = io.WriteString(f.IO.Out, fishShim)
 			default:
 				fmt.Fprintf(f.IO.ErrOut, "unsupported shell: %s\n", shell)
 				return errors.New("unsupported shell")
 			}
-			return nil
+			return err
 		},
 	}
 }

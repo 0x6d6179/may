@@ -139,7 +139,7 @@ func (c *OpenRouterClient) ChatComplete(ctx context.Context, req ChatRequest) (*
 	}
 
 	for _, m := range req.Messages {
-		body.Messages = append(body.Messages, orMessage{Role: m.Role, Content: m.Content})
+		body.Messages = append(body.Messages, orMessage(m))
 	}
 
 	if req.ResponseFormat != nil {

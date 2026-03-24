@@ -43,7 +43,7 @@ func NewCmdWsNew(f *factory.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&rootName, "in", "", "root name to create workspace under")
-	cmd.RegisterFlagCompletionFunc("in", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	_ = cmd.RegisterFlagCompletionFunc("in", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		cfg, err := f.Config()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
