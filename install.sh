@@ -140,7 +140,15 @@ main() {
 
   printf '\n'
   ok "may installed"
-  info "running first-time setup...\n"
+  info "running first-time setup..."
+
+  # ensure the install dir is in PATH for the rest of this script
+  local dir
+  dir=$(install_dir)
+  if [[ ":${PATH}:" != *":${dir}:"* ]]; then
+    export PATH="${dir}:${PATH}"
+  fi
+
   may init
 }
 
