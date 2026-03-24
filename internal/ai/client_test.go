@@ -107,8 +107,8 @@ func TestGenerateCommitMessages_HTTPError(t *testing.T) {
 		t.Fatal("GenerateCommitMessages with 500: expected error, got nil")
 	}
 
-	if callCount != 2 {
-		t.Errorf("server called %d times; want 2", callCount)
+	if callCount != 3 {
+		t.Errorf("server called %d times; want 3", callCount)
 	}
 }
 

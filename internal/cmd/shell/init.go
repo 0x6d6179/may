@@ -3,6 +3,7 @@ package shell
 import (
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/spf13/cobra"
@@ -85,11 +86,11 @@ func NewCmdShellInit(f *factory.Factory) *cobra.Command {
 			}
 			switch shell {
 			case "zsh":
-				fmt.Fprint(f.IO.Out, zshShim)
+				io.WriteString(f.IO.Out, zshShim)
 			case "bash":
-				fmt.Fprint(f.IO.Out, bashShim)
+				io.WriteString(f.IO.Out, bashShim)
 			case "fish":
-				fmt.Fprint(f.IO.Out, fishShim)
+				io.WriteString(f.IO.Out, fishShim)
 			default:
 				fmt.Fprintf(f.IO.ErrOut, "unsupported shell: %s\n", shell)
 				return errors.New("unsupported shell")

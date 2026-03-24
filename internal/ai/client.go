@@ -85,10 +85,7 @@ func (c *Client) GenerateCommitMessages(ctx context.Context, diff string) (*Comm
 
 	resp, err := c.provider.ChatComplete(ctx, req)
 	if err != nil {
-		resp, err = c.provider.ChatComplete(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	var payload commitPayload
