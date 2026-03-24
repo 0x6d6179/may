@@ -85,7 +85,7 @@ jobs:
 
       - name: update homebrew formula
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           tag="${{ steps.version.outputs.tag }}"
           version="${{ steps.version.outputs.version }}"
@@ -119,8 +119,7 @@ jobs:
             end
           end'
 
-          # clone tap, update formula, push
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/0x6d6179/homebrew-may.git" /tmp/tap
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/0x6d6179/homebrew-may.git" /tmp/tap
           echo "${formula}" > /tmp/tap/Formula/may.rb
           cd /tmp/tap
           git config user.name "may"
