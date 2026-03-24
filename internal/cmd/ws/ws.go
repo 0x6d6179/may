@@ -148,6 +148,7 @@ func NewCmdWs(f *factory.Factory) *cobra.Command {
 	}
 
 	cmd.AddCommand(NewCmdWsNew(f))
+	cmd.AddCommand(NewCmdWsClone(f))
 	cmd.AddCommand(NewCmdWsList(f))
 	cmd.AddCommand(NewCmdWsSearch(f))
 	cmd.AddCommand(NewCmdWsRoot(f))
