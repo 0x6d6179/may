@@ -79,10 +79,54 @@ install_binary() {
   add_to_path "${dir}"
 }
 
+# ── detect existing install ────────────────────────────────────────────────────
+
+check_existing() {
+  local existing
+  existing=$(command -v may 2>/dev/null) || return 0
+
+  local source="unknown"
+  case "${existing}" in
+    */go/bin/*)              source="go install" ;;
+    */homebrew/*|*/Cellar/*) source="homebrew" ;;
+    */.local/bin/*)          source="install script" ;;
+    /usr/local/bin/*)        source="install script" ;;
+  esac
+
+  if [[ -L "${existing}" ]]; then
+    local target
+    target=$(readlink -f "${existing}" 2>/dev/null || readlink "${existing}")
+    if [[ -f "$(dirname "${target}")/go.mod" ]] || \
+       [[ -f "$(dirname "${target}")/../go.mod" ]] || \
+       [[ "${target}" == *"/Workspaces/"* ]]; then
+      source="dev build"
+    fi
+  elif [[ -f "$(dirname "${existing}")/go.mod" ]] || \
+       [[ -f "$(dirname "${existing}")/../go.mod" ]]; then
+    source="dev build"
+  fi
+
+  info "existing installation detected: ${existing} (${source})"
+
+  if [[ "${source}" == "dev build" ]]; then
+    err "a dev build is installed at ${existing}.
+       remove it or adjust your PATH before installing the release version."
+  fi
+
+  printf '  overwrite existing installation? [y/N] '
+  read -r answer </dev/tty
+  case "${answer}" in
+    [yY]*) info "overwriting..." ;;
+    *)     info "cancelled."; exit 0 ;;
+  esac
+}
+
 # ── entry ─────────────────────────────────────────────────────────────────────
 
 main() {
   printf '\n  \033[1mmay\033[0m — personal productivity toolkit\n\n'
+
+  check_existing
 
   if install_binary 2>/dev/null; then
     :
