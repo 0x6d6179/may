@@ -24,30 +24,70 @@ func RepoName(r *Runner) (string, error) {
 	return filepath.Base(top), nil
 }
 
-// CopyEnvFiles copies .env and .env.local from src to dst if they exist.
-// Returns nil if neither file exists.
+// CopyEnvFiles copies .env* files from src to dst recursively.
+// Skips .git, node_modules, and other common non-project directories.
 func CopyEnvFiles(src, dst string) error {
-	for _, name := range []string{".env", ".env.local"} {
-		srcPath := filepath.Join(src, name)
-		dstPath := filepath.Join(dst, name)
+	skipDirs := map[string]bool{
+		".git":         true,
+		"node_modules": true,
+		"vendor":       true,
+		".next":        true,
+		"dist":         true,
+		"build":        true,
+		"target":       true,
+		"__pycache__":  true,
+		".venv":        true,
+	}
 
-		data, err := os.ReadFile(srcPath)
+	copied := 0
+	err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return fmt.Errorf("read %s: %w", srcPath, err)
+			return nil
 		}
 
-		info, err := os.Stat(srcPath)
+		if info.IsDir() {
+			if skipDirs[info.Name()] {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		name := info.Name()
+		if !strings.HasPrefix(name, ".env") {
+			return nil
+		}
+
+		rel, err := filepath.Rel(src, path)
 		if err != nil {
-			return fmt.Errorf("stat %s: %w", srcPath, err)
+			return nil
+		}
+
+		dstPath := filepath.Join(dst, rel)
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
+			return fmt.Errorf("mkdir %s: %w", filepath.Dir(dstPath), err)
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read %s: %w", path, err)
 		}
 
 		if err := os.WriteFile(dstPath, data, info.Mode()); err != nil {
 			return fmt.Errorf("write %s: %w", dstPath, err)
 		}
+
+		copied++
+		return nil
+	})
+
+	if err != nil {
+		return err
 	}
+
+	if copied == 0 {
+		return fmt.Errorf("no .env files found in %s", src)
+	}
+
 	return nil
 }
 

@@ -10,9 +10,11 @@ import (
 )
 
 func NewCmdWtEnv(f *factory.Factory) *cobra.Command {
+	var reverse bool
+
 	cmd := &cobra.Command{
 		Use:   "env",
-		Short: "copy .env files from main worktree to current",
+		Short: "sync .env files between main worktree and current",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := &git.Runner{}
@@ -27,14 +29,23 @@ func NewCmdWtEnv(f *factory.Factory) *cobra.Command {
 				return err
 			}
 
-			if err := git.CopyEnvFiles(mainPath, cwd); err != nil {
+			src, dst := mainPath, cwd
+			direction := "main → current"
+			if reverse {
+				src, dst = cwd, mainPath
+				direction = "current → main"
+			}
+
+			if err := git.CopyEnvFiles(src, dst); err != nil {
 				return err
 			}
 
-			fmt.Fprintf(f.IO.ErrOut, "✓ env files synced\n")
+			fmt.Fprintf(f.IO.ErrOut, "✓ env files synced (%s)\n", direction)
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolVarP(&reverse, "reverse", "r", false, "copy from current worktree to main")
 
 	return cmd
 }
