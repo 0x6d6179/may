@@ -88,47 +88,60 @@ jobs:
 
       - name: generate changelog
         id: changelog
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ steps.version.outputs.tag }}"
           prev=$(git tag -l 'v*' --sort=-v:refname | grep -v beta | sed -n '2p')
           prev="${prev:-$(git rev-list --max-parents=0 HEAD)}"
 
-          declare -A email_to_user
-          while IFS= read -r email; do
+          lookup=$(mktemp)
+          git log "${prev}..HEAD" --pretty=format:"%ae" | sort -u | while IFS= read -r email; do
             gh_user=$(gh api "/search/users?q=${email}+in:email" --jq '.items[0].login' 2>/dev/null || true)
-            email_to_user["${email}"]="${gh_user}"
-          done <<< "$(git log "${prev}..HEAD" --pretty=format:"%ae" | sort -u)"
+            if [[ -n "${gh_user}" ]]; then
+              printf '%s\t%s\n' "${email}" "${gh_user}" >> "${lookup}"
+            fi
+          done
+
+          resolve() {
+            local email="$1"
+            local match
+            match=$(grep "^${email}	" "${lookup}" | head -1 | cut -f2)
+            echo "${match}"
+          }
 
           echo "## what's changed" > notes.md
           echo "" >> notes.md
 
-          while IFS='|' read -r subject hash email name; do
+          git log "${prev}..HEAD" --pretty=format:"%s|%h|%ae|%an" | while IFS='|' read -r subject hash email name; do
             subject=$(echo "${subject}" | tr '[:upper:]' '[:lower:]')
-            gh_user="${email_to_user[${email}]}"
+            gh_user=$(resolve "${email}")
             if [[ -n "${gh_user}" ]]; then
               echo "- ${subject} (${hash}) — @${gh_user}" >> notes.md
             else
               echo "- ${subject} (${hash}) — ${name}" >> notes.md
             fi
-          done < <(git log "${prev}..HEAD" --pretty=format:"%s|%h|%ae|%an")
+          done
 
           echo "" >> notes.md
           echo "" >> notes.md
 
           echo "## thanks" >> notes.md
           echo "" >> notes.md
-          while IFS='|' read -r email name; do
-            gh_user="${email_to_user[${email}]}"
+          git log "${prev}..HEAD" --pretty=format:"%ae|%an" | sort -u -t'|' -k1,1 | while IFS='|' read -r email name; do
+            gh_user=$(resolve "${email}")
             if [[ -n "${gh_user}" ]]; then
               echo "- @${gh_user}" >> notes.md
             else
               echo "- ${name}" >> notes.md
             fi
-          done < <(git log "${prev}..HEAD" --pretty=format:"%ae|%an" | sort -u -t'|' -k1,1)
+          done
 
           echo "" >> notes.md
           echo "---" >> notes.md
           printf 'released by @%s\n' "${{ github.actor }}" >> notes.md
+          rm -f "${lookup}"
 
       - name: create github release
         env:
