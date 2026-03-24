@@ -100,9 +100,7 @@ func detectWorkspaceDirs() []string {
 
 	var found []string
 	for _, p := range candidates {
-		if _, err := os.Stat(p); err == nil {
-			found = append(found, p)
-		}
+		found = append(found, p)
 	}
 	return found
 }
@@ -113,7 +111,11 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 	for {
 		selectOpts := make([]ui.Option[string], 0, len(detected)+1)
 		for _, p := range detected {
-			selectOpts = append(selectOpts, ui.Option[string]{Label: p, Value: p})
+			label := p
+			if _, err := os.Stat(p); err != nil {
+				label = p + " (create)"
+			}
+			selectOpts = append(selectOpts, ui.Option[string]{Label: label, Value: p})
 		}
 		selectOpts = append(selectOpts, ui.Option[string]{Label: "Enter custom path", Value: "__custom__"})
 
@@ -135,9 +137,6 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 					if s == "" {
 						return errors.New("path cannot be empty")
 					}
-					if _, err := os.Stat(s); err != nil {
-						return fmt.Errorf("path does not exist: %s", s)
-					}
 					return nil
 				},
 			})
@@ -146,6 +145,26 @@ func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []stri
 			}
 			if err != nil {
 				return err
+			}
+		}
+
+		if _, err := os.Stat(rootPath); err != nil {
+			create, cerr := ui.RunConfirm(opts, ui.ConfirmSpec{
+				Title:   fmt.Sprintf("create %s?", rootPath),
+				Default: true,
+			})
+			if errors.Is(cerr, ui.ErrAborted) {
+				return cerr
+			}
+			if cerr != nil {
+				return cerr
+			}
+			if !create {
+				continue
+			}
+			if merr := os.MkdirAll(rootPath, 0o755); merr != nil {
+				fmt.Fprintf(f.IO.ErrOut, "  failed to create directory: %s\n", merr)
+				continue
 			}
 		}
 

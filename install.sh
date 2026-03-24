@@ -25,7 +25,42 @@ install_dir() {
 
 add_to_path() {
   local dir="$1"
-  if [[ ":${PATH}:" != *":${dir}:"* ]]; then
+  if [[ ":${PATH}:" == *":${dir}:"* ]]; then
+    return
+  fi
+
+  export PATH="${dir}:${PATH}"
+
+  local profile=""
+  local shell_name
+  shell_name=$(basename "${SHELL:-bash}")
+
+  case "${shell_name}" in
+    zsh)  profile="${HOME}/.zshrc" ;;
+    bash)
+      if [[ -f "${HOME}/.bashrc" ]]; then
+        profile="${HOME}/.bashrc"
+      elif [[ -f "${HOME}/.bash_profile" ]]; then
+        profile="${HOME}/.bash_profile"
+      else
+        profile="${HOME}/.bashrc"
+      fi
+      ;;
+    fish) profile="${HOME}/.config/fish/config.fish" ;;
+  esac
+
+  if [[ -n "${profile}" ]]; then
+    local line
+    case "${shell_name}" in
+      fish) line="fish_add_path ${dir}" ;;
+      *)    line="export PATH=\"${dir}:\$PATH\"" ;;
+    esac
+
+    if ! grep -qF "${dir}" "${profile}" 2>/dev/null; then
+      printf '\n%s\n' "${line}" >> "${profile}"
+      ok "added ${dir} to PATH in ${profile}"
+    fi
+  else
     info "${dir} is not in PATH — add it to your shell profile:"
     printf '\n  export PATH="%s:$PATH"\n\n' "${dir}"
   fi
@@ -140,16 +175,13 @@ main() {
 
   printf '\n'
   ok "may installed"
-  info "running first-time setup..."
 
-  # ensure the install dir is in PATH for the rest of this script
-  local dir
-  dir=$(install_dir)
-  if [[ ":${PATH}:" != *":${dir}:"* ]]; then
-    export PATH="${dir}:${PATH}"
+  if [[ -t 0 ]] || [[ -e /dev/tty ]]; then
+    info "running first-time setup..."
+    may init </dev/tty
+  else
+    info "run 'may init' to complete setup"
   fi
-
-  may init
 }
 
 main
