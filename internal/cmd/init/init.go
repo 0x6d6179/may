@@ -98,11 +98,7 @@ func detectWorkspaceDirs() []string {
 		filepath.Join(home, "src"),
 	}
 
-	var found []string
-	for _, p := range candidates {
-		found = append(found, p)
-	}
-	return found
+	return candidates
 }
 
 func setupWorkspaceRoots(f *factory.Factory, cfg *config.Config, detected []string) error {
