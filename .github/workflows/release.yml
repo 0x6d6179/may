@@ -111,7 +111,7 @@ released by @${{ github.actor }}"
             checksums.txt
 
       - name: update homebrew formula
-        if: inputs.prerelease == false
+        if: ${{ inputs.prerelease == false }}
         env:
           TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
