@@ -91,12 +91,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ steps.version.outputs.tag }}"
-          flags="--title ${tag} --generate-notes"
+          flags="--title ${tag}"
           if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then
             flags="${flags} --prerelease"
           fi
+          notes=$(gh api repos/${{ github.repository }}/releases/generate-notes \
+            -f tag_name="${tag}" --jq '.body')
+          notes="${notes}
+
+---
+released by @${{ github.actor }}"
           gh release create "${tag}" \
             ${flags} \
+            --notes "${notes}" \
             may_darwin_amd64 \
             may_darwin_arm64 \
             may_linux_amd64 \
