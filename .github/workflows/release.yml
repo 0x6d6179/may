@@ -168,7 +168,7 @@ jobs:
         run: |
           tag="${{ steps.version.outputs.tag }}"
           version="${{ steps.version.outputs.version }}"
-          rev=$(git rev-parse "${tag}")
+          rev=$(git rev-parse "${tag}^{commit}")
 
           formula='class May < Formula
             desc "personal productivity toolkit"
