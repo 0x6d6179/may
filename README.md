@@ -113,3 +113,7 @@ everything else is opt-in shell function aliases — `function ws() { may ws "$@
 
 - [setup guide](docs/setup.md)
 - [dev guide](docs/dev.md)
+
+## Links
+
+[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/may)
