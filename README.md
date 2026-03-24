@@ -7,7 +7,7 @@ every developer has a pile of shell scripts and aliases that barely work. may pu
 </p>
 
 ```sh
-go install github.com/0x6d6179/may/cmd/may@latest
+curl -fsSL https://raw.githubusercontent.com/0x6d6179/may/main/install.sh | bash
 ```
 
 ---
@@ -64,16 +64,16 @@ identity & meta
 
 ## install
 
-### go install
-
-```sh
-go install github.com/0x6d6179/may/cmd/may@latest
-```
-
 ### script
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/0x6d6179/may/main/install.sh | bash
+```
+
+### go install
+
+```sh
+go install github.com/0x6d6179/may/cmd/may@latest
 ```
 
 ### homebrew
