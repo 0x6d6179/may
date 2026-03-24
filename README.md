@@ -1,6 +1,10 @@
 # may
 
-personal productivity toolkit for developers.
+every developer has a pile of shell scripts and aliases that barely work. may puts them in one place. a single binary with workspace switching, git worktrees, ai, ssh management, dotfiles, and 30+ utilities that just work.
+
+<p align="center">
+  <img src="assets/may.gif" alt="may demo — worktree, workspace, and ai" width="720">
+</p>
 
 ```sh
 brew tap 0x6d6179/may && brew install may
