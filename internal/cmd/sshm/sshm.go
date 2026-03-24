@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/0x6d6179/may/internal/factory"
 	"github.com/spf13/cobra"
@@ -98,11 +99,12 @@ func newCmdConnect(f *factory.Factory) *cobra.Command {
 			sshArgs := buildSSHArgs(conn)
 			fmt.Fprintf(f.IO.ErrOut, "connecting to %s (%s@%s)...\n", conn.Name, conn.User, conn.Host)
 
-			c := exec.Command("ssh", sshArgs...)
-			c.Stdin = os.Stdin
-			c.Stdout = os.Stdout
-			c.Stderr = os.Stderr
-			return c.Run()
+			sshPath, err := exec.LookPath("ssh")
+			if err != nil {
+				return fmt.Errorf("ssh not found: %w", err)
+			}
+
+			return syscall.Exec(sshPath, append([]string{"ssh"}, sshArgs...), os.Environ())
 		},
 	}
 }
