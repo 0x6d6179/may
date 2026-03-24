@@ -90,6 +90,10 @@ func mayFunctionSnippet(shell string) string {
 	switch shell {
 	case "fish":
 		return "function may\n" +
+			"  if not command -q may\n" +
+			"    echo \"may: command not found — check your PATH\" >&2\n" +
+			"    return 127\n" +
+			"  end\n" +
 			"  set _may_out (\\command may $argv)\n" +
 			"  if test -n \"$_may_out\" -a -d \"$_may_out\"\n" +
 			"    builtin cd \"$_may_out\"\n" +
@@ -99,6 +103,10 @@ func mayFunctionSnippet(shell string) string {
 			"end"
 	default:
 		return "function may() {\n" +
+			"  if ! command -v may &>/dev/null; then\n" +
+			"    echo \"may: command not found — check your PATH\" >&2\n" +
+			"    return 127\n" +
+			"  fi\n" +
 			"  local _may_out\n" +
 			"  _may_out=$(\\command may \"$@\")\n" +
 			"  if [[ -n \"$_may_out\" ]] && [[ -d \"$_may_out\" ]]; then\n" +
@@ -178,16 +186,16 @@ func idHookSnippet(shell string) string {
 	case "fish":
 		return "functions --erase _may_id_hook 2>/dev/null\n" +
 			"function --on-variable PWD _may_id_hook\n" +
-			"  \\command may id status --apply --quiet\n" +
+			"  command -q may && \\command may id status --apply --quiet\n" +
 			"end"
 	case "zsh":
 		return "autoload -Uz add-zsh-hook\n" +
-			"function _may_id_hook() { \\command may id status --apply --quiet }\n" +
+			"function _may_id_hook() { (( $+commands[may] )) && \\command may id status --apply --quiet }\n" +
 			"chpwd_functions=(\"${(@)chpwd_functions:#_may_id_hook}\")\n" +
 			"chpwd_functions+=(_may_id_hook)"
 	default:
 		return "if [[ ${PROMPT_COMMAND:-} != *'_may_id_hook'* ]]; then\n" +
-			"  function _may_id_hook() { \\command may id status --apply --quiet; }\n" +
+			"  function _may_id_hook() { command -v may &>/dev/null && \\command may id status --apply --quiet; }\n" +
 			"  PROMPT_COMMAND=\"${PROMPT_COMMAND:+${PROMPT_COMMAND}; }_may_id_hook\"\n" +
 			"fi"
 	}
@@ -235,8 +243,10 @@ func aiFixSnippet(shell string) string {
 func completionSnippet(shell string) string {
 	switch shell {
 	case "fish":
-		return "\\command may shell completion fish | source"
+		return "\\command may shell completion fish 2>/dev/null | source"
+	case "zsh":
+		return "autoload -Uz compinit && compinit -C 2>/dev/null\neval \"$(\\command may shell completion zsh 2>/dev/null)\""
 	default:
-		return fmt.Sprintf("eval \"$(\\command may shell completion %s)\"", shell)
+		return fmt.Sprintf("eval \"$(\\command may shell completion %s 2>/dev/null)\"", shell)
 	}
 }

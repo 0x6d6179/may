@@ -11,6 +11,10 @@ import (
 
 const zshShim = `
 function may() {
+  if ! command -v may &>/dev/null; then
+    echo "may: command not found — check your PATH" >&2
+    return 127
+  fi
   local _may_out
   _may_out=$(\command may "$@")
   if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
@@ -24,15 +28,20 @@ function ws() { may ws "$@"; }
 function wt() { may wt "$@"; }
 
 autoload -Uz add-zsh-hook
-function _may_id_hook() { \command may id status --apply --quiet }
+function _may_id_hook() { (( $+commands[may] )) && \command may id status --apply --quiet }
 chpwd_functions=("${(@)chpwd_functions:#_may_id_hook}")
 chpwd_functions+=(_may_id_hook)
 
-eval "$(\command may shell completion zsh)"
+autoload -Uz compinit && compinit -C 2>/dev/null
+eval "$(\command may shell completion zsh 2>/dev/null)"
 `
 
 const bashShim = `
 function may() {
+  if ! command -v may &>/dev/null; then
+    echo "may: command not found — check your PATH" >&2
+    return 127
+  fi
   local _may_out
   _may_out=$(\command may "$@")
   if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
@@ -46,15 +55,19 @@ function ws() { may ws "$@"; }
 function wt() { may wt "$@"; }
 
 if [[ ${PROMPT_COMMAND:-} != *'_may_id_hook'* ]]; then
-  function _may_id_hook() { \command may id status --apply --quiet; }
+  function _may_id_hook() { command -v may &>/dev/null && \command may id status --apply --quiet; }
   PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND}; }_may_id_hook"
 fi
 
-eval "$(\command may shell completion bash)"
+eval "$(\command may shell completion bash 2>/dev/null)"
 `
 
 const fishShim = `
 function may
+  if not command -q may
+    echo "may: command not found — check your PATH" >&2
+    return 127
+  end
   set _may_out (\command may $argv)
   if test -n "$_may_out" -a -d "$_may_out"
     builtin cd "$_may_out"
@@ -68,10 +81,10 @@ function wt; may wt $argv; end
 
 functions --erase _may_id_hook 2>/dev/null
 function --on-variable PWD _may_id_hook
-  \command may id status --apply --quiet
+  command -q may && \command may id status --apply --quiet
 end
 
-\command may shell completion fish | source
+\command may shell completion fish 2>/dev/null | source
 `
 
 func NewCmdShellInit(f *factory.Factory) *cobra.Command {
