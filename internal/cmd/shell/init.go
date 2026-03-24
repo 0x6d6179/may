@@ -15,13 +15,20 @@ function may() {
     echo "may: command not found — check your PATH" >&2
     return 127
   fi
-  local _may_out
-  _may_out=$(\command may "$@")
-  if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
-    \builtin cd -- "$_may_out"
-  elif [[ -n "$_may_out" ]]; then
-    printf '%s\n' "$_may_out"
-  fi
+  case "${1:-}" in
+    ws|wt|j)
+      local _may_out
+      _may_out=$(\command may "$@")
+      if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
+        \builtin cd -- "$_may_out"
+      elif [[ -n "$_may_out" ]]; then
+        printf '%s\n' "$_may_out"
+      fi
+      ;;
+    *)
+      \command may "$@"
+      ;;
+  esac
 }
 
 function ws() { may ws "$@"; }
@@ -42,13 +49,20 @@ function may() {
     echo "may: command not found — check your PATH" >&2
     return 127
   fi
-  local _may_out
-  _may_out=$(\command may "$@")
-  if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
-    \builtin cd -- "$_may_out"
-  elif [[ -n "$_may_out" ]]; then
-    printf '%s\n' "$_may_out"
-  fi
+  case "${1:-}" in
+    ws|wt|j)
+      local _may_out
+      _may_out=$(\command may "$@")
+      if [[ -n "$_may_out" ]] && [[ -d "$_may_out" ]]; then
+        \builtin cd -- "$_may_out"
+      elif [[ -n "$_may_out" ]]; then
+        printf '%s\n' "$_may_out"
+      fi
+      ;;
+    *)
+      \command may "$@"
+      ;;
+  esac
 }
 
 function ws() { may ws "$@"; }
@@ -68,11 +82,16 @@ function may
     echo "may: command not found — check your PATH" >&2
     return 127
   end
-  set _may_out (\command may $argv)
-  if test -n "$_may_out" -a -d "$_may_out"
-    builtin cd "$_may_out"
-  else if test -n "$_may_out"
-    printf '%s\n' "$_may_out"
+  switch $argv[1]
+    case ws wt j
+      set _may_out (\command may $argv)
+      if test -n "$_may_out" -a -d "$_may_out"
+        builtin cd "$_may_out"
+      else if test -n "$_may_out"
+        printf '%s\n' "$_may_out"
+      end
+    case '*'
+      \command may $argv
   end
 end
 

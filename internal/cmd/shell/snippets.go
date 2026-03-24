@@ -94,11 +94,16 @@ func mayFunctionSnippet(shell string) string {
 			"    echo \"may: command not found — check your PATH\" >&2\n" +
 			"    return 127\n" +
 			"  end\n" +
-			"  set _may_out (\\command may $argv)\n" +
-			"  if test -n \"$_may_out\" -a -d \"$_may_out\"\n" +
-			"    builtin cd \"$_may_out\"\n" +
-			"  else if test -n \"$_may_out\"\n" +
-			"    printf '%s\\n' \"$_may_out\"\n" +
+			"  switch $argv[1]\n" +
+			"    case ws wt j\n" +
+			"      set _may_out (\\command may $argv)\n" +
+			"      if test -n \"$_may_out\" -a -d \"$_may_out\"\n" +
+			"        builtin cd \"$_may_out\"\n" +
+			"      else if test -n \"$_may_out\"\n" +
+			"        printf '%s\\n' \"$_may_out\"\n" +
+			"      end\n" +
+			"    case '*'\n" +
+			"      \\command may $argv\n" +
 			"  end\n" +
 			"end"
 	default:
@@ -107,13 +112,20 @@ func mayFunctionSnippet(shell string) string {
 			"    echo \"may: command not found — check your PATH\" >&2\n" +
 			"    return 127\n" +
 			"  fi\n" +
-			"  local _may_out\n" +
-			"  _may_out=$(\\command may \"$@\")\n" +
-			"  if [[ -n \"$_may_out\" ]] && [[ -d \"$_may_out\" ]]; then\n" +
-			"    \\builtin cd -- \"$_may_out\"\n" +
-			"  elif [[ -n \"$_may_out\" ]]; then\n" +
-			"    printf '%s\\n' \"$_may_out\"\n" +
-			"  fi\n" +
+			"  case \"${1:-}\" in\n" +
+			"    ws|wt|j)\n" +
+			"      local _may_out\n" +
+			"      _may_out=$(\\command may \"$@\")\n" +
+			"      if [[ -n \"$_may_out\" ]] && [[ -d \"$_may_out\" ]]; then\n" +
+			"        \\builtin cd -- \"$_may_out\"\n" +
+			"      elif [[ -n \"$_may_out\" ]]; then\n" +
+			"        printf '%s\\n' \"$_may_out\"\n" +
+			"      fi\n" +
+			"      ;;\n" +
+			"    *)\n" +
+			"      \\command may \"$@\"\n" +
+			"      ;;\n" +
+			"  esac\n" +
 			"}"
 	}
 }
