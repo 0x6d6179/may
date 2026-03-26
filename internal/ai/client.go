@@ -41,11 +41,13 @@ type Client struct {
 }
 
 func NewProviderFromConfig(cfg *config.AIConfig) Provider {
-	baseURL := ""
-	if cfg.Provider == "" && cfg.BaseURL != "" {
-		baseURL = cfg.BaseURL
-	}
-	return NewOpenRouterClient(baseURL, cfg.APIKey)
+    baseURL := ""
+    if cfg.Provider != "" {
+        baseURL = cfg.Provider
+    } else if cfg.BaseURL != "" {
+        baseURL = cfg.BaseURL
+    }
+    return NewOpenRouterClient(baseURL, cfg.APIKey)
 }
 
 func NewClientFromConfig(cfg *config.AIConfig) *Client {
