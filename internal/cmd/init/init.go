@@ -306,7 +306,15 @@ func setupAI(f *factory.Factory, state *wizardState) error {
 	}
 
 	if provider == "custom" {
-		baseURL, err = ui.RunInput(opts, ui.InputSpec{Title: "base url"})
+		baseURL, err = ui.RunInput(opts, ui.InputSpec{
+			Title: "base url (https only)",
+			Validate: func(s string) error {
+				if !strings.HasPrefix(s, "https://") {
+					return errors.New("base url must use https://")
+				}
+				return nil
+			},
+		})
 		if errors.Is(err, ui.ErrAborted) {
 			return err
 		}

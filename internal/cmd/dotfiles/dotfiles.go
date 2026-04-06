@@ -40,8 +40,7 @@ func NewCmdDotfiles(f *factory.Factory) *cobra.Command {
 
 func isGitHubURL(s string) bool {
 	return strings.HasPrefix(s, "https://github.com/") ||
-		strings.HasPrefix(s, "git@github.com:") ||
-		strings.HasPrefix(s, "http://github.com/")
+		strings.HasPrefix(s, "git@github.com:")
 }
 
 func gitRun(repoPath string, args ...string) error {

@@ -119,11 +119,21 @@ func connect(f *factory.Factory, key, connStr string) error {
 
 	var bin string
 	var args []string
+	var env []string
 
 	switch u.Scheme {
 	case "postgres", "postgresql":
 		bin = "psql"
-		args = []string{connStr}
+		// psql accepts the full URL; password is passed via PGPASSWORD
+		// to avoid exposing it in process args
+		sanitized := *u
+		if u.User != nil {
+			if _, ok := u.User.Password(); ok {
+				sanitized.User = url.User(u.User.Username())
+				env = append(env, fmt.Sprintf("PGPASSWORD=%s", mustPassword(u)))
+			}
+		}
+		args = []string{sanitized.String()}
 	case "mysql":
 		bin = "mysql"
 		host := u.Hostname()
@@ -134,7 +144,7 @@ func connect(f *factory.Factory, key, connStr string) error {
 		dbName := strings.TrimPrefix(u.Path, "/")
 		args = []string{"-h", host, "-P", port, "-u", u.User.Username()}
 		if p, ok := u.User.Password(); ok {
-			args = append(args, fmt.Sprintf("-p%s", p))
+			env = append(env, fmt.Sprintf("MYSQL_PWD=%s", p))
 		}
 		if dbName != "" {
 			args = append(args, dbName)
@@ -156,8 +166,17 @@ func connect(f *factory.Factory, key, connStr string) error {
 	fmt.Fprintf(f.IO.ErrOut, "connecting to %s via %s...\n", key, bin)
 
 	c := exec.Command(bin, args...)
+	c.Env = append(os.Environ(), env...)
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	return c.Run()
+}
+
+func mustPassword(u *url.URL) string {
+	if u.User == nil {
+		return ""
+	}
+	p, _ := u.User.Password()
+	return p
 }

@@ -95,6 +95,10 @@ func newCmdConnect(f *factory.Factory) *cobra.Command {
 				return fmt.Errorf("connection %q not found", args[0])
 			}
 
+			if err := validateConnection(conn); err != nil {
+				return fmt.Errorf("invalid connection %q: %w", conn.Name, err)
+			}
+
 			sshArgs := buildSSHArgs(conn)
 			fmt.Fprintf(f.IO.ErrOut, "connecting to %s (%s@%s)...\n", conn.Name, conn.User, conn.Host)
 
@@ -161,6 +165,10 @@ func newCmdNew(f *factory.Factory) *cobra.Command {
 				ProxyJump: proxyJump,
 			}
 
+			if err := validateConnection(&conn); err != nil {
+				return fmt.Errorf("invalid connection: %w", err)
+			}
+
 			s.Connections = append(s.Connections, conn)
 			if err := saveStore(s); err != nil {
 				return err
@@ -220,6 +228,10 @@ func newCmdEdit(f *factory.Factory) *cobra.Command {
 			}
 			if cmd.Flags().Changed("proxy") {
 				conn.ProxyJump = proxyJump
+			}
+
+			if err := validateConnection(conn); err != nil {
+				return fmt.Errorf("invalid connection: %w", err)
 			}
 
 			if err := saveStore(s); err != nil {
@@ -349,6 +361,30 @@ func newCmdCopy(f *factory.Factory) *cobra.Command {
 			return c.Run()
 		},
 	}
+}
+
+// validateConnection checks connection fields for unsafe values that could
+// be used for SSH argument injection via hand-edited YAML configs.
+func validateConnection(conn *Connection) error {
+	if conn.Host == "" {
+		return fmt.Errorf("host is required")
+	}
+	if strings.ContainsAny(conn.Host, " \t\n;|&$`") {
+		return fmt.Errorf("host contains invalid characters")
+	}
+	if strings.ContainsAny(conn.User, " \t\n;|&$`") {
+		return fmt.Errorf("user contains invalid characters")
+	}
+	if conn.ProxyJump != "" && strings.ContainsAny(conn.ProxyJump, "\n;|&$`") {
+		return fmt.Errorf("proxy jump contains invalid characters")
+	}
+	if conn.RemoteCmd != "" && strings.ContainsAny(conn.RemoteCmd, "\n;|&$`") {
+		return fmt.Errorf("remote command contains invalid characters")
+	}
+	if conn.Port < 0 || conn.Port > 65535 {
+		return fmt.Errorf("port must be between 0 and 65535")
+	}
+	return nil
 }
 
 func buildSSHArgs(conn *Connection) []string {

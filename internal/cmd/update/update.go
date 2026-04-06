@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/0x6d6179/may/internal/factory"
@@ -26,6 +27,8 @@ func NewCmdUpdate(f *factory.Factory) *cobra.Command {
 	}
 }
 
+var httpClient = &http.Client{Timeout: 30 * time.Second}
+
 func runUpdate(f *factory.Factory) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -38,7 +41,7 @@ func runUpdate(f *factory.Factory) error {
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		fmt.Fprintf(f.IO.ErrOut, "update check failed: %v\n", err)
 		return err
@@ -74,6 +77,10 @@ func runUpdate(f *factory.Factory) error {
 	if downloadURL == "" {
 		fmt.Fprintf(f.IO.ErrOut, "no release asset for %s\n", artifactName)
 		return fmt.Errorf("no release asset for %s", artifactName)
+	}
+
+	if !strings.HasPrefix(downloadURL, "https://github.com/") {
+		return fmt.Errorf("unexpected download url origin: %s", downloadURL)
 	}
 
 	execPath, err := os.Executable()
@@ -112,7 +119,7 @@ func downloadFile(ctx context.Context, dest, url string) error {
 		return err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}

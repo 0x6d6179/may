@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/0x6d6179/may/internal/factory"
@@ -42,22 +43,22 @@ func fetchWeather(city string, format string) (string, error) {
 		Timeout: 10 * time.Second,
 	}
 
-	var url string
+	var endpoint string
 	if format == "full" {
 		if city == "" {
-			url = "https://wttr.in/?0ATnq"
+			endpoint = "https://wttr.in/?0ATnq"
 		} else {
-			url = fmt.Sprintf("https://wttr.in/%s?0ATnq", city)
+			endpoint = fmt.Sprintf("https://wttr.in/%s?0ATnq", url.PathEscape(city))
 		}
 	} else {
 		if city == "" {
-			url = "https://wttr.in/?format=3"
+			endpoint = "https://wttr.in/?format=3"
 		} else {
-			url = fmt.Sprintf("https://wttr.in/%s?format=3", city)
+			endpoint = fmt.Sprintf("https://wttr.in/%s?format=3", url.PathEscape(city))
 		}
 	}
 
-	resp, err := client.Get(url)
+	resp, err := client.Get(endpoint)
 	if err != nil {
 		return "", err
 	}

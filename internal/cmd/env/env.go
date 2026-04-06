@@ -256,7 +256,7 @@ func setEnv(f *factory.Factory, keyValue string) error {
 		output += "\n"
 	}
 
-	if err := os.WriteFile(".env", []byte(output), 0o644); err != nil {
+	if err := os.WriteFile(".env", []byte(output), 0o600); err != nil {
 		return fmt.Errorf("write .env: %w", err)
 	}
 

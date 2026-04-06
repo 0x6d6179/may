@@ -72,7 +72,8 @@ func CopyEnvFiles(src, dst string) error {
 			return fmt.Errorf("read %s: %w", path, err)
 		}
 
-		if err := os.WriteFile(dstPath, data, info.Mode()); err != nil {
+		// force 0o600 for .env files since they typically contain secrets
+		if err := os.WriteFile(dstPath, data, 0o600); err != nil {
 			return fmt.Errorf("write %s: %w", dstPath, err)
 		}
 
